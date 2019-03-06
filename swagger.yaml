@@ -3,30 +3,55 @@ info:
   description: |
     ## Overview
     This API provides the ability to create reservations (for further manual input) or applications via a JSON-REST-API for rent deposit guarantee for a private tenancy (TR). In principle, this option is open to all partners of plusforta GmbH, which allows you to implement your own form sections or interfaces for forwarding of (application) data.
-    
+
     ## Full Applications
-    
+
     Submitting a complete application consists of two steps, first you must use create application to upload all required data. In the second step, use submit applicaiton in order to process the application and receive a response from the insurance provider.
 
-    ```create_application``` At this step, you must provide all required data (see below). We will verify that all required data is present and valid. Any missing or invalid data will be indicated with an error message.
+    ```/application``` At this step, you must provide all required data (see below). We will verify that all required data is present and valid. Any missing or invalid data will be indicated with an error message.
 
     If all data is present and valid, the returned state will have a value of not_completed_not_reservation. and a key will be generated labeled cid. You will use this cid for the next step....
 
-    ```submit_application``` With this step, we submit the application identified by the cid to the insurance provider.
-    
-    Upon completetion of initial processing, you will receive the necessary data for further processing.
-    
+    ```/application/submit``` With this step, we submit the application identified by the cid to the insurance provider.
+
+    Upon completetion of processing, you will receive the necessary data for further processing.
+
     ## Reservations
-    
+
+    Reservations are "mini" applications that are used for quick approvals with the intent that the user will return
+    and complete the full application at a later date.
+
     Reservations can be created with a single call.  This only establishes the intial data and shows whether or not the user has passed
     a credit check.   Further entry should be completed in the online form.
-    
+
     **Note\:** It is not possible at this time to convert a reservation into an application via the API
-    
+
+    ## State Field
+
+    For historical reasons the state field actually indicates the state and type of entry.
+
+    * ```reservation/not_reservation``` indicates the type of application.
+    * ```completed/not_completed``` indicates whether or not all data has been gathered for the application
+    * ```accepted/not_accepted/stopped``` indicates the processing state.  For accepted/not_accepted states, a final decision has been
+    reached and no futher processing will occur.    For stopped states, this indicates a technical difficulty of some kind and
+    processing will continue at a later time.
+
+    ### State table:
+
+    * completed_not_reservation_stopped: Application, Processing paused (technical reasons)
+    * completed_not_reservation_not_accepted: Application, Rejected
+    * not_completed_not_reservation: Application, In Progress
+    * completed_not_reservation_accepted: Application, Accepted
+    * reservation_accepted: Reservation, Accepted
+    * not_completed_reservation: Reservation, Incomplete
+    * reservation_stopped: Reservation, Processing paused (technical reasons)
+    * reservation_not_accepted: Reservation, Rejected
+    * completed_reservation_accepted: Application from Reservation, Accepted
+    * completed_reservation_not_accepted: Application from Reservation, Rejected
   version: "1.0.0"
   title: Reservation and application API
   contact:
-    email: api@plusforta.de
+    email: marc.runkel@plusforta.de
 #  license:
 #    name: Apache 2.0
 #    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -38,9 +63,6 @@ tags:
   - name: helpers
     description: Various helper functions
 servers:
-# Added by API Auto Mocking Plugin
-  - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/plusForta/plusForta_Applications/1.0.0
   - url: 'https://antrag.dev.kautionsfrei.de/api/tenancy'
     description: Developer Environment
   - url: 'https://secure.kautionsfrei.de/api/tenancy'
@@ -59,7 +81,7 @@ paths:
           required: true
           example: 7kH5lXW1QIid2q%2Bc5Eq0qg%3D%3D
           description: The encrypted ID for a previously created application.  Must be urlencoded.
-          schema: 
+          schema:
             type: string
           in: query
       security:
@@ -90,7 +112,7 @@ paths:
     post:
       tags:
         - application
-      security: 
+      security:
         - ApiKeyAuth: []
       summary: creates an application
       operationId: createApplication
@@ -130,7 +152,7 @@ paths:
       summary: submits a supplied application for processing
       operationId: submitApplication
       description: |
-        Takes a previously created application identified by CID and submits it for procssing by the 
+        Takes a previously created application identified by CID and submits it for procssing by the
         insurance provider.
       requestBody:
         content:
@@ -140,7 +162,7 @@ paths:
       responses:
         '200':
           description: application submitted
-          content: 
+          content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApplicationSubmissionResponse'
@@ -163,7 +185,7 @@ paths:
           required: true
           example: 7kH5lXW1QIid2q%2Bc5Eq0qg%3D%3D
           description: The encrypted ID for a previously created reservation.  Must be urlencoded.
-          schema: 
+          schema:
             type: string
           in: query
       security:
@@ -194,7 +216,7 @@ paths:
     post:
       tags:
         - reservation
-      security: 
+      security:
         - ApiKeyAuth: []
       summary: creates a reservation
       operationId: createReservation
@@ -223,7 +245,7 @@ paths:
     post:
       tags:
         - reservation
-      security: 
+      security:
         - ApiKeyAuth: []
       summary: creates a reservation (legacy)
       operationId: createReservation-legacy
@@ -331,7 +353,7 @@ paths:
           schema:
             type: string
       responses:
-        200: 
+        200:
           description: Returned bank name or empty set if missing or invalid IBAN
           content:
             application/json:
@@ -436,7 +458,7 @@ components:
           description: |
             * `reservation_accepted` - Reservation is submitted and accepted
             * `reservation_not_accepted` - Reservation is submitted and NOT accepted
-            * `not_completed_reservation` - Reservation is incomplete 
+            * `not_completed_reservation` - Reservation is incomplete
             * `reservation_stopped` - Resvervation is currently blocked for processing (technical failure) but will be retried
         id:
           type: string
@@ -691,7 +713,7 @@ components:
           enum:
             - not_completed_not_reservation
           description: |
-            * `not_completed_not_reservation` - Application is ready for submission 
+            * `not_completed_not_reservation` - Application is ready for submission
         id:
           type: string
           example: "10000005"
@@ -716,7 +738,7 @@ components:
             - completed_not_reservation_not_accepted
             - completed_not_reservation_stopped
           description: |
-            * `completed_not_reservation_accepted` - Application was submitted and was accepted 
+            * `completed_not_reservation_accepted` - Application was submitted and was accepted
             * `completed_not_reservation_not_accepted` - Application was submitted and was NOT accepted
             * `completed_not_reservation_stopped` - Application was submitted but a technical failure occurred.
         id:
