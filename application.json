@@ -1,0 +1,777 @@
+{
+  "openapi" : "3.0.0",
+  "info" : {
+    "description" : "## Overview\nThis API provides the ability to create reservations (for further manual input) or applications via a JSON-REST-API for rent deposit guarantee for a private tenancy (TR). In principle, this option is open to all partners of plusforta GmbH, which allows you to implement your own form sections or interfaces for forwarding of (application) data.\n\n## Full Applications\n\nSubmitting a complete application consists of two steps, first you must use create application to upload all required data. In the second step, use submit applicaiton in order to process the application and receive a response from the insurance provider.\n\n```create_application``` At this step, you must provide all required data (see below). We will verify that all required data is present and valid. Any missing or invalid data will be indicated with an error message.\n\nIf all data is present and valid, the returned state will have a value of not_completed_not_reservation. and a key will be generated labeled cid. You will use this cid for the next step....\n\n```submit_application``` With this step, we submit the application identified by the cid to the insurance provider.\n\nUpon completetion of initial processing, you will receive the necessary data for further processing.\n\n## Reservations\n\nReservations can be created with a single call.  This only establishes the intial data and shows whether or not the user has passed\na credit check.   Further entry should be completed in the online form.\n\n**Note\\:** It is not possible at this time to convert a reservation into an application via the API\n",
+    "version" : "1.0.0",
+    "title" : "Reservation and application API",
+    "contact" : {
+      "email" : "api@plusforta.de"
+    }
+  },
+  "tags" : [ {
+    "name" : "reservation",
+    "description" : "Submitting and querying reservations"
+  }, {
+    "name" : "application",
+    "description" : "Submitting and querying applications"
+  }, {
+    "name" : "helpers",
+    "description" : "Various helper functions"
+  } ],
+  "servers" : [ {
+    "description" : "SwaggerHub API Auto Mocking",
+    "url" : "https://virtserver.swaggerhub.com/plusForta/plusForta_Applications/1.0.0"
+  }, {
+    "url" : "https://antrag.dev.kautionsfrei.de/api/tenancy",
+    "description" : "Developer Environment"
+  }, {
+    "url" : "https://secure.kautionsfrei.de/api/tenancy",
+    "description" : "Production Environment"
+  } ],
+  "paths" : {
+    "/application" : {
+      "get" : {
+        "tags" : [ "application" ],
+        "summary" : "retrieve an application",
+        "operationId" : "getApplication",
+        "description" : "You can retrieve any application via the CID\n",
+        "parameters" : [ {
+          "name" : "cid",
+          "required" : true,
+          "example" : "7kH5lXW1QIid2q%2Bc5Eq0qg%3D%3D",
+          "description" : "The encrypted ID for a previously created application.  Must be urlencoded.",
+          "schema" : {
+            "type" : "string"
+          },
+          "in" : "query"
+        } ],
+        "security" : [ {
+          "ApiKeyAuth" : [ ]
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "get application",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "credentials for auth missing",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "cid not found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "error" : {
+                      "type" : "string",
+                      "example" : "cid not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "application" ],
+        "security" : [ {
+          "ApiKeyAuth" : [ ]
+        } ],
+        "summary" : "creates an application",
+        "operationId" : "createApplication",
+        "description" : "Allows the creation of an application\n",
+        "responses" : {
+          "200" : {
+            "description" : "application created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "credentials for auth missing",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          }
+        },
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Application"
+              }
+            }
+          },
+          "description" : "data for reservation"
+        }
+      }
+    },
+    "/reservation" : {
+      "get" : {
+        "tags" : [ "reservation" ],
+        "summary" : "queries reservation status",
+        "operationId" : "reservation",
+        "description" : "You can retrieve any reservation via the CID\n",
+        "parameters" : [ {
+          "name" : "cid",
+          "required" : true,
+          "example" : "7kH5lXW1QIid2q%2Bc5Eq0qg%3D%3D",
+          "description" : "The encrypted ID for a previously created reservation.  Must be urlencoded.",
+          "schema" : {
+            "type" : "string"
+          },
+          "in" : "query"
+        } ],
+        "security" : [ {
+          "ApiKeyAuth" : [ ]
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "get reservation state",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReservationResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "credentials for auth missing",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "cid not found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "error" : {
+                      "type" : "string",
+                      "example" : "cid not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "reservation" ],
+        "security" : [ {
+          "ApiKeyAuth" : [ ]
+        } ],
+        "summary" : "creates a reservation",
+        "operationId" : "createReservation",
+        "description" : "Allows the creation of a reservation\n",
+        "responses" : {
+          "200" : {
+            "description" : "reservation created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReservationResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "credentials for auth missing",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          }
+        },
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Reservation"
+              }
+            }
+          },
+          "description" : "data for reservation"
+        }
+      }
+    },
+    "/create_reservation" : {
+      "post" : {
+        "tags" : [ "reservation" ],
+        "security" : [ {
+          "ApiKeyAuth" : [ ]
+        } ],
+        "summary" : "creates a reservation (legacy)",
+        "operationId" : "createReservation-legacy",
+        "description" : "Allows the creation of a reservation (this is a duplicate for POST on /reservation which is preferred)\nWill be removed in v2 of the API\n",
+        "responses" : {
+          "200" : {
+            "description" : "reservation created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReservationResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "credentials for auth missing",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          }
+        },
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Reservation"
+              }
+            }
+          },
+          "description" : "data for reservation"
+        }
+      }
+    },
+    "/rates" : {
+      "get" : {
+        "tags" : [ "helpers" ],
+        "summary" : "Returns the rate for a particular product, payment option, and deposit sum.  Also available in english under /en/api ...\n",
+        "description" : "More stuff here",
+        "operationId" : "rates",
+        "parameters" : [ {
+          "name" : "sum",
+          "required" : true,
+          "example" : "1500,00",
+          "in" : "query",
+          "description" : "The deposit amount to be covered",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "payment",
+          "required" : true,
+          "example" : "1",
+          "in" : "query",
+          "description" : "The number of annual payments selected (1 for annual, 12 for monthly payments)",
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "1", "12" ]
+          }
+        }, {
+          "name" : "product_selection",
+          "required" : true,
+          "example" : "kfde_04_2016",
+          "in" : "query",
+          "description" : "The product to calculate for.",
+          "schema" : {
+            "$ref" : "#/components/schemas/Products"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Return calcuated data",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "rate_per_year" : {
+                      "description" : "Amount to be paid for the year",
+                      "type" : "string",
+                      "example" : "78,75"
+                    },
+                    "rate_per_payment" : {
+                      "description" : "Amount to be paid each payment cycle",
+                      "type" : "string",
+                      "example" : "78,75"
+                    },
+                    "payment" : {
+                      "description" : "Number of payments for the year",
+                      "type" : "string",
+                      "example" : "1"
+                    },
+                    "i18n_adverb" : {
+                      "description" : "Translated adverb for the payment term",
+                      "type" : "string",
+                      "example" : "jährlich"
+                    },
+                    "i18n_noun" : {
+                      "description" : "Translated noun for the payment term",
+                      "type" : "string",
+                      "example" : "Jahresbeitrag"
+                    },
+                    "rate_per_year_factor" : {
+                      "description" : "Percentage of the deposit that is due as an annual payment",
+                      "type" : "string",
+                      "example" : "0,0525"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Invalid or missing input"
+          }
+        }
+      }
+    },
+    "/bank" : {
+      "get" : {
+        "tags" : [ "helpers" ],
+        "summary" : "Returns the bank name for a given IBAN",
+        "operationId" : "bank",
+        "parameters" : [ {
+          "name" : "iban",
+          "required" : true,
+          "in" : "query",
+          "description" : "IBAN without spaces or hypens",
+          "example" : "DE12500105170648489890",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returned bank name or empty set if missing or invalid IBAN",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string",
+                    "example" : "ING-DiBa"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "securitySchemes" : {
+      "ApiKeyAuth" : {
+        "type" : "apiKey",
+        "in" : "header",
+        "name" : "X-Apikey"
+      }
+    },
+    "schemas" : {
+      "Products" : {
+        "properties" : {
+          "product_selection" : {
+            "type" : "string",
+            "enum" : [ "kfde_04_2016", "kfx_04_2016" ]
+          }
+        }
+      },
+      "Reservation" : {
+        "required" : [ "product", "lessee_attributes" ],
+        "properties" : {
+          "product" : {
+            "type" : "string",
+            "enum" : [ "kfde_04_2016", "kfx_04_2016" ]
+          },
+          "lessee_attributes" : {
+            "type" : "object",
+            "required" : [ "gender", "name", "first_name", "birth_date", "email", "phone", "address_street", "address_snumber", "address_zip", "address_city", "terms_accepted" ],
+            "properties" : {
+              "gender" : {
+                "type" : "string",
+                "enum" : [ "m", "f" ]
+              },
+              "name" : {
+                "type" : "string",
+                "example" : "Mustermann"
+              },
+              "first_name" : {
+                "type" : "string",
+                "example" : "Max"
+              },
+              "birth_date" : {
+                "type" : "string",
+                "format" : "date",
+                "example" : "1984-05-01"
+              },
+              "email" : {
+                "type" : "string",
+                "format" : "email",
+                "example" : "max.mustermann@example.com"
+              },
+              "phone" : {
+                "type" : "string",
+                "format" : "phonenumber",
+                "description" : "phone number of lessee (only German numbers, starting with 0, include area code)",
+                "example" : "030 1234567"
+              },
+              "address_street" : {
+                "type" : "string",
+                "example" : "Gaudystraße"
+              },
+              "address_snumber" : {
+                "type" : "string",
+                "example" : "26A"
+              },
+              "address_zip" : {
+                "type" : "string",
+                "example" : "10439"
+              },
+              "address_city" : {
+                "type" : "string",
+                "example" : "Berlin"
+              },
+              "terms_accepted" : {
+                "type" : "integer",
+                "description" : "1 accepted, 0 not accepted",
+                "enum" : [ "0", "1" ]
+              }
+            }
+          }
+        }
+      },
+      "ReservationResponse" : {
+        "properties" : {
+          "cid" : {
+            "type" : "string",
+            "example" : "7kH5lXW1QIid2q+c5Eq0qg=="
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "reservation_accepted", "reservation_not_accepted", "not_completed_reservation", "reservation_stopped" ],
+            "description" : "* `reservation_accepted` - Reservation is submitted and accepted\n* `reservation_not_accepted` - Reservation is submitted and NOT accepted\n* `not_completed_reservation` - Reservation is incomplete \n* `reservation_stopped` - Resvervation is currently blocked for processing (technical failure) but will be retried\n"
+          },
+          "id" : {
+            "type" : "string",
+            "example" : "10000005"
+          },
+          "type" : {
+            "type" : "string",
+            "example" : "TenancyRetail"
+          },
+          "brand" : {
+            "type" : "string",
+            "example" : "kf"
+          },
+          "documents" : {
+            "type" : "object",
+            "properties" : {
+              "tenancy_reservation_complete" : {
+                "type" : "string",
+                "example" : "[…]/documents/5?file_location_hash=c5ffb9896bf5df93a454acb89737c79776c13e00af595e77cbce07dc27c5f39f"
+              }
+            }
+          }
+        }
+      },
+      "Application" : {
+        "required" : [ "tenancy_retail" ],
+        "properties" : {
+          "tenancy_retail" : {
+            "type" : "object",
+            "required" : [ "product", "lessee_attributes", "lessor_attributes", "apartment_attributes", "banking_account_attributes" ],
+            "properties" : {
+              "product" : {
+                "type" : "string",
+                "enum" : [ "kfde_04_2016", "kfx_04_2016" ]
+              },
+              "payment" : {
+                "type" : "string",
+                "description" : "12 for monthly payments | 1 for annual payment",
+                "enum" : [ "1", "12" ]
+              },
+              "lessee_attributes" : {
+                "type" : "object",
+                "required" : [ "gender", "name", "first_name", "birth_date", "email", "phone", "address_street", "address_snumber", "address_zip", "address_city", "terms_accepted" ],
+                "properties" : {
+                  "gender" : {
+                    "type" : "string",
+                    "enum" : [ "m", "f" ]
+                  },
+                  "name" : {
+                    "type" : "string",
+                    "example" : "Mustermann"
+                  },
+                  "first_name" : {
+                    "type" : "string",
+                    "example" : "Max"
+                  },
+                  "birth_date" : {
+                    "type" : "string",
+                    "format" : "date",
+                    "example" : "1984-05-01"
+                  },
+                  "email" : {
+                    "type" : "string",
+                    "format" : "email",
+                    "example" : "max.mustermann@example.com"
+                  },
+                  "phone" : {
+                    "type" : "string",
+                    "format" : "phonenumber",
+                    "description" : "phone number of lessee (only German numbers, starting with 0, include area code)",
+                    "example" : "030 1234567"
+                  },
+                  "address_street" : {
+                    "type" : "string",
+                    "example" : "Gaudystraße"
+                  },
+                  "address_snumber" : {
+                    "type" : "string",
+                    "example" : "26A"
+                  },
+                  "address_zip" : {
+                    "type" : "string",
+                    "example" : 10439
+                  },
+                  "address_city" : {
+                    "type" : "string",
+                    "example" : "Berlin"
+                  },
+                  "terms_accepted" : {
+                    "type" : "integer",
+                    "description" : "1 accepted, 0 not accepted",
+                    "enum" : [ 0, 1 ]
+                  }
+                }
+              },
+              "lessor_attributes" : {
+                "type" : "object",
+                "required" : [ "gender", "name", "first_name", "address_street", "address_snumber", "address_zip", "address_city" ],
+                "properties" : {
+                  "gender" : {
+                    "type" : "string",
+                    "enum" : [ "m", "f" ]
+                  },
+                  "name" : {
+                    "type" : "string",
+                    "example" : "Mustermann"
+                  },
+                  "first_name" : {
+                    "type" : "string",
+                    "example" : "Max"
+                  },
+                  "address_street" : {
+                    "type" : "string",
+                    "example" : "Gaudystraße"
+                  },
+                  "address_snumber" : {
+                    "type" : "string",
+                    "example" : "26A"
+                  },
+                  "address_zip" : {
+                    "type" : "string",
+                    "example" : "10439"
+                  },
+                  "address_city" : {
+                    "type" : "string",
+                    "example" : "Berlin"
+                  }
+                }
+              },
+              "apartment_attributes" : {
+                "type" : "object",
+                "required" : [ "is_existing", "sum", "until_temporary", "rental_date", "move_date", "address_street", "address_snumber", "address_zip", "address_city", "is_temporary", "postal_dest", "sum_rent" ],
+                "properties" : {
+                  "is_existing" : {
+                    "description" : "Normally 0, 1 if Deposit has already been paid",
+                    "type" : "string",
+                    "enum" : [ "0", "1" ]
+                  },
+                  "sum" : {
+                    "description" : "Value of the deposit in the format: 1.000,00",
+                    "type" : "string",
+                    "example" : "1.500,00"
+                  },
+                  "until_temporary" : {
+                    "description" : "if the rental contract is temporary (see is_temporary below), end date in the format: YYYY-MM-DD",
+                    "example" : "2020-02-01",
+                    "type" : "string"
+                  },
+                  "rental_date" : {
+                    "description" : "Date contract was signed in the format: YYYY-MM-DD",
+                    "example" : "2019-01-15",
+                    "type" : "string"
+                  },
+                  "move_date" : {
+                    "description" : "Move-in date in the format: YYYY-MM-DD",
+                    "example" : "2019-02-01",
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "type" : "string",
+                    "example" : "Mustermann"
+                  },
+                  "first_name" : {
+                    "type" : "string",
+                    "example" : "Max"
+                  },
+                  "address_street" : {
+                    "type" : "string",
+                    "example" : "Gaudystraße"
+                  },
+                  "address_snumber" : {
+                    "type" : "string",
+                    "example" : "26A"
+                  },
+                  "address_zip" : {
+                    "type" : "string",
+                    "example" : "10439"
+                  },
+                  "address_city" : {
+                    "type" : "string",
+                    "example" : "Berlin"
+                  },
+                  "is_temporary" : {
+                    "description" : "Contract is temporary? 1 Yes, 0 No>",
+                    "type" : "string",
+                    "enum" : [ "0", "1" ]
+                  },
+                  "postal_dest" : {
+                    "description" : "Where should the guarantee document be sent: 0 current Applicant address (lessee), 1 new address (apartment), 1 Landlord's Address (lessor)\n",
+                    "type" : "string",
+                    "enum" : [ "0", "1", "2" ]
+                  }
+                }
+              },
+              "banking_account_attributes" : {
+                "type" : "object",
+                "required" : [ "holder_name", "holder_firstname", "holder_company", "bank_name", "iban" ],
+                "properties" : {
+                  "holder_name" : {
+                    "type" : "string",
+                    "example" : "Mustermann"
+                  },
+                  "holder_firstname" : {
+                    "type" : "string",
+                    "example" : "Max"
+                  },
+                  "holder_company" : {
+                    "type" : "string",
+                    "example" : "Muster, GmbH"
+                  },
+                  "bank_name" : {
+                    "type" : "string",
+                    "example" : "DKB"
+                  },
+                  "iban" : {
+                    "type" : "string",
+                    "example" : "DE12500105170648489890"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ApplicationResponse" : {
+        "properties" : {
+          "cid" : {
+            "type" : "string",
+            "example" : "7kH5lXW1QIid2q+c5Eq0qg=="
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "reservation_accepted", "reservation_not_accepted", "not_completed_reservation", "reservation_stopped" ],
+            "description" : "* `reservation_accepted` - Reservation is submitted and accepted\n* `reservation_not_accepted` - Reservation is submitted and NOT accepted\n* `not_completed_reservation` - Reservation is incomplete \n* `reservation_stopped` - Resvervation is currently blocked for processing (technical failure) but will be retried\n"
+          },
+          "id" : {
+            "type" : "string",
+            "example" : "10000005"
+          },
+          "type" : {
+            "type" : "string",
+            "example" : "TenancyRetail"
+          },
+          "brand" : {
+            "type" : "string",
+            "example" : "kf"
+          },
+          "documents" : {
+            "type" : "object",
+            "properties" : {
+              "tenancy_reservation_complete" : {
+                "type" : "string",
+                "example" : "[…]/documents/5?file_location_hash=c5ffb9896bf5df93a454acb89737c79776c13e00af595e77cbce07dc27c5f39f"
+              }
+            }
+          }
+        }
+      },
+      "Error" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "message" ]
+      },
+      "Unauthorized" : {
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "example" : "credentials for auth missing",
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "responses" : {
+      "NotFound" : {
+        "description" : "The specified resource was not found",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
