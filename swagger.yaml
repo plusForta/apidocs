@@ -378,73 +378,78 @@ components:
           - "kfx_04_2016"
     Reservation:
       required:
-        - product
-        - lessee_attributes
+        - tenancy_retail
       properties:
-        product:
-          type: string
-          enum:
-            - kfde_04_2016
-            - kfx_04_2016
-        lessee_attributes:
-          type: array
-          items:
-            type: object
-            required:
-              - gender
-              - name
-              - first_name
-              - birth_date
-              - email
-              - phone
-              - address_street
-              - address_snumber
-              - address_zip
-              - address_city
-              - terms_accepted
-            properties:
-              gender:
-                type: string
-                enum:
-                  - m
-                  - f
-              name:
-                type: string
-                example: Mustermann
-              first_name:
-                type: string
-                example: Max
-              birth_date:
-                type: string
-                format: date
-                example: "1984-05-01"
-              email:
-                type: string
-                format: email
-                example: 'max.mustermann@example.com'
-              phone:
-                type: string
-                format: phonenumber
-                description: phone number of lessee (only German numbers, starting with 0, include area code)
-                example: "030 1234567"
-              address_street:
-                type: string
-                example: Gaudystraße
-              address_snumber:
-                type: string
-                example: "26A"
-              address_zip:
-                type: string
-                example: "10439"
-              address_city:
-                type: string
-                example: Berlin
-              terms_accepted:
-                type: integer
-                description: 1 accepted, 0 not accepted
-                enum:
-                  - "0"
-                  - "1"
+        tenancy_retail:
+          type: object
+          required:
+            - product
+            - lessee_attributes
+          properties:
+            product:
+              type: string
+              enum:
+                - kfde_04_2016
+                - kfx_04_2016
+            lessee_attributes:
+              type: array
+              items:
+                type: object
+                required:
+                  - gender
+                  - name
+                  - first_name
+                  - birth_date
+                  - email
+                  - phone
+                  - address_street
+                  - address_snumber
+                  - address_zip
+                  - address_city
+                  - terms_accepted
+                properties:
+                  gender:
+                    type: string
+                    enum:
+                      - m
+                      - f
+                  name:
+                    type: string
+                    example: Mustermann
+                  first_name:
+                    type: string
+                    example: Max
+                  birth_date:
+                    type: string
+                    format: date
+                    example: "1984-05-01"
+                  email:
+                    type: string
+                    format: email
+                    example: 'max.mustermann@example.com'
+                  phone:
+                    type: string
+                    format: phonenumber
+                    description: phone number of lessee (only German numbers, starting with 0, include area code)
+                    example: "030 1234567"
+                  address_street:
+                    type: string
+                    example: Gaudystraße
+                  address_snumber:
+                    type: string
+                    example: "26A"
+                  address_zip:
+                    type: string
+                    example: "10439"
+                  address_city:
+                    type: string
+                    example: Berlin
+                  terms_accepted:
+                    type: integer
+                    description: 1 accepted, 0 not accepted
+                    enum:
+                      - "0"
+                      - "1"
     ReservationResponse:
       properties:
         cid:
