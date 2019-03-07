@@ -52,6 +52,9 @@ info:
   title: Reservation and application API
   contact:
     email: marc.runkel@plusforta.de
+#  license:
+#    name: Apache 2.0
+#    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 tags:
   - name: reservation
     description: Submitting and querying reservations
@@ -64,8 +67,6 @@ servers:
     description: Developer Environment
   - url: 'https://secure.kautionsfrei.de/api/tenancy'
     description: Production Environment
-  - url: 'http://localhost:3000/api/tenancy'
-    description: Local Developer Environment
 paths:
   /application:
     get:
@@ -789,12 +790,12 @@ components:
     Error:
       type: object
       properties:
-        code:
-          type: string
+        # code:
+        #   type: string
         message:
           type: string
       required:
-        - code
+        # - code
         - message
     Unauthorized:
       type: object
