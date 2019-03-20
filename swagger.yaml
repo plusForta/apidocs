@@ -64,9 +64,13 @@ tags:
     description: Various helper functions
 servers:
   - url: 'https://antrag.dev.kautionsfrei.de/api/tenancy'
-    description: Developer Environment
+    description: Developer Environment (has the latest code, maybe broken)
+  - url: 'https://oa-stage.pfdev.de/api/tenancy'
+    description: Staging Environment (usually mirrors Production, except when we're about to launch (then it's the next version))
   - url: 'https://secure.kautionsfrei.de/api/tenancy'
-    description: Production Environment
+    description: Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )
+  - url: 'http://localhost:3000/api/tenancy'
+    description: Local Developer Environment (This is for internal use only)
 paths:
   /application:
     get:
