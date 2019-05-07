@@ -14,7 +14,7 @@ info:
 
     ```/application/submit``` With this step, we submit the application identified by the cid to the insurance provider.
 
-    Upon completetion of processing, you will receive the necessary data for further processing.
+    Upon completion of processing, you will receive the necessary data for further processing.
 
     ## Reservations
 
@@ -60,6 +60,7 @@ info:
     * v2.0.0
       * Switch to new product kfde_03_2019 (**previous product kfde_04_2016 sunset by provider on 15.6.2019**).
         * lessor_attributes address now optional
+          * The fields: address_street, address_snumber, address_zip, and address_city are required **only** when apartment_attributes.postal_dest is 1
         * Start of new 'pending' status
       * Removal of the /create_reservation endpoint (POST /reservation instead)
       * Removal of the KFX product
@@ -594,7 +595,7 @@ components:
                       - 0
                       - 1
             lessor_attributes:
-              description: 'The fields: address_street, address_snumber, address_zip, and address_city are required when apartment.postal_dest is 1'
+              description: 'The fields: address_street, address_snumber, address_zip, and address_city are required when apartment_attributes.postal_dest is 1'
               type: object
               required:
                 - gender
