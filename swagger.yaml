@@ -32,23 +32,39 @@ info:
 
     * ```reservation/not_reservation``` indicates the type of application.
     * ```completed/not_completed``` indicates whether or not all data has been gathered for the application
-    * ```accepted/not_accepted/stopped``` indicates the processing state.  For accepted/not_accepted states, a final decision has been
-    reached and no futher processing will occur.    For stopped states, this indicates a technical difficulty of some kind and
-    processing will continue at a later time.
+    * ```accepted/not_accepted/stopped/pending``` indicates the processing state.  For accepted/not_accepted states, a final decision has been
+    reached and no futher processing will occur.
+
+    For stopped states, this indicates a technical difficulty of some kind and
+    processing will continue at a later time.  For pending states, the insurance provider is performing additional manual processes as the
+    application status will be updated at a latter time.
+
+    For stopped and pending applications, use the ```GET /application``` endpoint to query the status of the application.   We'd recommend checks on an hourly basis.
 
     ### State table:
 
     * completed_not_reservation_stopped: Application, Processing paused (technical reasons)
     * completed_not_reservation_not_accepted: Application, Rejected
     * not_completed_not_reservation: Application, In Progress
+    * completed_not_reservation_pending: Application, pending manual check at Insurance Provider
     * completed_not_reservation_accepted: Application, Accepted
     * reservation_accepted: Reservation, Accepted
     * not_completed_reservation: Reservation, Incomplete
     * reservation_stopped: Reservation, Processing paused (technical reasons)
     * reservation_not_accepted: Reservation, Rejected
+    * completed_reservation_pending: Application from Reservation, pending manual check at Insurance Provider
     * completed_reservation_accepted: Application from Reservation, Accepted
     * completed_reservation_not_accepted: Application from Reservation, Rejected
-  version: "1.0.0"
+
+    ## Changelog
+    * v2.0.0
+      * Switch to new product kfde_03_2019 (**previous product kfde_04_2016 sunset by provider on 15.6.2019**).
+        * lessor_attributes address now optional
+        * Start of new 'pending' status
+      * Removal of the /create_reservation endpoint (POST /reservation instead)
+      * Removal of the KFX product
+
+  version: "2.0.0"
   title: Reservation and application API
   contact:
     email: marc.runkel@plusforta.de
@@ -63,12 +79,12 @@ tags:
   - name: helpers
     description: Various helper functions
 servers:
-  - url: 'https://antrag.dev.kautionsfrei.de/api/tenancy'
-    description: Developer Environment (has the latest code, maybe broken)
   - url: 'https://oa-stage.pfdev.de/api/tenancy'
-    description: Staging Environment (usually mirrors Production, except when we're about to launch (then it's the next version))
+    description: Staging Environment usually mirrors Production, except when we are about to launch (then it's the next version)
   - url: 'https://secure.kautionsfrei.de/api/tenancy'
     description: Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )
+  - url: 'https://oa-dev.pfdev.de/api/tenancy'
+    description: Developer Environment (has the latest code, maybe broken)
   - url: 'http://localhost:3000/api/tenancy'
     description: Local Developer Environment (This is for internal use only)
 paths:
@@ -255,7 +271,7 @@ paths:
       operationId: createReservation-legacy
       description: |
         Allows the creation of a reservation (this is a duplicate for POST on /reservation which is preferred)
-        Will be removed in v2 of the API
+        Will be removed in v3 of the API
       responses:
         '200':
           description: reservation created
@@ -303,7 +319,7 @@ paths:
               - "12"
         - name: product_selection
           required: true
-          example: 'kfde_04_2016'
+          example: 'kfde_03_2019'
           in: query
           description: The product to calculate for.
           schema:
@@ -378,8 +394,7 @@ components:
         product_selection:
           type: string
           enum:
-          - "kfde_04_2016"
-          - "kfx_04_2016"
+          - "kfde_03_2019"
     Reservation:
       required:
         - tenancy_retail
@@ -393,8 +408,7 @@ components:
             product:
               type: string
               enum:
-                - kfde_04_2016
-                - kfx_04_2016
+                - kfde_03_2019
             lessee_attributes:
               type: array
               items:
@@ -482,8 +496,6 @@ components:
           example: kf
           enum:
             - kf
-            - kfx
-
         documents:
           type: object
           properties:
@@ -514,8 +526,7 @@ components:
             product:
               type: string
               enum:
-                - kfde_04_2016
-                - kfx_04_2016
+                - kfde_03_2019
             payment:
               type: string
               description: '12 for monthly payments | 1 for annual payment'
@@ -583,15 +594,12 @@ components:
                       - 0
                       - 1
             lessor_attributes:
+              description: 'The fields: address_street, address_snumber, address_zip, and address_city are required when apartment.postal_dest is 1'
               type: object
               required:
                 - gender
                 - name
                 - first_name
-                - address_street
-                - address_snumber
-                - address_zip
-                - address_city
               properties:
                 gender:
                   type: string
@@ -748,10 +756,12 @@ components:
             - completed_not_reservation_accepted
             - completed_not_reservation_not_accepted
             - completed_not_reservation_stopped
+            - completed_not_reservation_pending
           description: |
             * `completed_not_reservation_accepted` - Application was submitted and was accepted
             * `completed_not_reservation_not_accepted` - Application was submitted and was NOT accepted
             * `completed_not_reservation_stopped` - Application was submitted but a technical failure occurred.
+            * `completed_not_reservation_pending` - Application was submitted but manual processing required.
         id:
           type: string
           example: "10000005"
@@ -763,7 +773,6 @@ components:
           example: kf
           enum:
             - kf
-            - kfx
         documents:
           type: object
           properties:
