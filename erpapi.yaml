@@ -1,0 +1,505 @@
+openapi: 3.0.0
+info:
+  description: |
+    ## Overview
+    This is the overview
+    ## Changelog
+    * v0.0.1
+      * first attempt
+  version: "0.0.1"
+  title: ERP API
+  contact:
+    email: marc.runkel@plusforta.de
+#  license:
+#    name: Apache 2.0
+#    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: application
+    description: Submitting applications
+  - name: cancel
+    description: Submit the cancellation of an existing insurance
+servers:
+  - url: 'https://oa-stage.pfdev.de/api/erp'
+    description: Staging Environment usually mirrors Production, except when we are about to launch (then it's the next version)
+  - url: 'https://api.kautionsfrei.de/api/erp'
+    description: Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )
+  - url: 'https://oa-dev.pfdev.de/api/erp'
+    description: Developer Environment (has the latest code, maybe broken)
+paths:
+  /application:
+    post:
+      tags:
+        - application
+      security:
+        - ApiKeyAuth: []
+      summary: creates an application
+      operationId: createApplication
+      description: |
+        Allows the creation of an application
+      responses:
+        '200':
+          description: application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationErrorResponse'
+        '401':
+          description: credentials for auth missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+        description: data for reservation
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Apikey
+  schemas:
+    Products:
+      properties:
+        product_selection:
+          type: string
+          enum:
+          - "kfde_03_2019"
+    Reservation:
+      required:
+        - tenancy_retail
+      properties:
+        tenancy_retail:
+          type: object
+          required:
+            - product
+            - lessee_attributes
+          properties:
+            product:
+              type: string
+              enum:
+                - kfde_03_2019
+            lessee_attributes:
+              type: array
+              items:
+                type: object
+                required:
+                  - gender
+                  - name
+                  - first_name
+                  - birth_date
+                  - email
+                  - phone
+                  - address_street
+                  - address_snumber
+                  - address_zip
+                  - address_city
+                  - terms_accepted
+                properties:
+                  gender:
+                    type: string
+                    enum:
+                      - m
+                      - f
+                  name:
+                    type: string
+                    example: Mustermann
+                  first_name:
+                    type: string
+                    example: Max
+                  birth_date:
+                    type: string
+                    format: date
+                    example: "1984-05-01"
+                  email:
+                    type: string
+                    format: email
+                    example: 'max.mustermann@example.com'
+                  phone:
+                    type: string
+                    format: phonenumber
+                    description: phone number of lessee (only German numbers, starting with 0, include area code)
+                    example: "030 1234567"
+                  address_street:
+                    type: string
+                    example: Gaudystraße
+                  address_snumber:
+                    type: string
+                    example: "26A"
+                  address_zip:
+                    type: string
+                    example: "10439"
+                  address_city:
+                    type: string
+                    example: Berlin
+                  terms_accepted:
+                    type: integer
+                    description: 1 accepted, 0 not accepted
+                    enum:
+                      - "0"
+                      - "1"
+    ReservationResponse:
+      properties:
+        cid:
+          type: string
+          example: 7kH5lXW1QIid2q+c5Eq0qg==
+        state:
+          type: string
+          enum:
+            - reservation_accepted
+            - reservation_not_accepted
+            - not_completed_reservation
+            - reservation_stopped
+          description: |
+            * `reservation_accepted` - Reservation is submitted and accepted
+            * `reservation_not_accepted` - Reservation is submitted and NOT accepted
+            * `not_completed_reservation` - Reservation is incomplete
+            * `reservation_stopped` - Resvervation is currently blocked for processing (technical failure) but will be retried
+        id:
+          type: string
+          example: "10000005"
+        type:
+          type: string
+          example: TenancyRetail
+        brand:
+          type: string
+          example: kf
+          enum:
+            - kf
+        documents:
+          type: object
+          properties:
+            tenancy_reservation_complete:
+              type: string
+              example: >-
+                […]/documents/5?file_location_hash=c5ffb9896bf5df93a454acb89737c79776c13e00af595e77cbce07dc27c5f39f
+    ApplicationSubmission:
+      required:
+        - cid
+      properties:
+        cid:
+          type: string
+          example: c6/JZZ9NqKPbCz7Lo4e4/w==
+    Application:
+      required:
+        - tenancy_retail
+      properties:
+        tenancy_retail:
+          type: object
+          required:
+            - product
+            - lessee_attributes
+            - lessor_attributes
+            - apartment_attributes
+            - banking_account_attributes
+          properties:
+            product:
+              type: string
+              enum:
+                - kfde_03_2019
+            payment:
+              type: string
+              description: '12 for monthly payments | 1 for annual payment'
+              enum:
+                - "1"
+                - "12"
+            lessee_attributes:
+              type: array
+              items:
+                type: object
+                required:
+                  - gender
+                  - name
+                  - first_name
+                  - birth_date
+                  - email
+                  - phone
+                  - address_street
+                  - address_snumber
+                  - address_zip
+                  - address_city
+                  - terms_accepted
+                properties:
+                  gender:
+                    type: string
+                    enum:
+                      - m
+                      - f
+                  name:
+                    type: string
+                    example: Mustermann
+                  first_name:
+                    type: string
+                    example: Max
+                  birth_date:
+                    type: string
+                    format: date
+                    example: '1984-05-01'
+                  email:
+                    type: string
+                    format: email
+                    example: 'max.mustermann@example.com'
+                  phone:
+                    type: string
+                    format: phonenumber
+                    description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
+                    example: "030 1234567"
+                  address_street:
+                    type: string
+                    example: Gaudystraße
+                  address_snumber:
+                    type: string
+                    example: 26A
+                  address_zip:
+                    type: string
+                    example: 10439
+                  address_city:
+                    type: string
+                    example: Berlin
+                  terms_accepted:
+                    type: integer
+                    description: 1 accepted, 0 not accepted
+                    example: 1
+                    enum:
+                      - 0
+                      - 1
+            lessor_attributes:
+              description: 'The fields: address_street, address_snumber, address_zip, and address_city are required when apartment_attributes.postal_dest is 1'
+              type: object
+              required:
+                - gender
+                - name
+                - first_name
+              properties:
+                gender:
+                  type: string
+                  enum:
+                    - m
+                    - f
+                name:
+                  type: string
+                  example: Mustermann
+                first_name:
+                  type: string
+                  example: Max
+                address_street:
+                  type: string
+                  example: Gaudystraße
+                address_snumber:
+                  type: string
+                  example: "26A"
+                address_zip:
+                  type: string
+                  example: "10439"
+                address_city:
+                  type: string
+                  example: Berlin
+            apartment_attributes:
+              type: object
+              required:
+                - is_existing
+                - sum
+                - until_temporary
+                - rental_date
+                - move_date
+                - address_street
+                - address_snumber
+                - address_zip
+                - address_city
+                - is_temporary
+                - postal_dest
+                - sum_rent
+              properties:
+                is_existing:
+                  description: Normally 0, 1 if Deposit has already been paid
+                  type: string
+                  enum:
+                    - "0"
+                    - "1"
+                sum:
+                  description: 'Value of the deposit in the format: 1.000,00'
+                  type: string
+                  example: '1.500,00'
+                until_temporary:
+                  description: 'if the rental contract is temporary (see is_temporary below), end date in the format: YYYY-MM-DD'
+                  example: '2020-02-01'
+                  type: string
+                rental_date:
+                  description: 'Date contract was signed in the format: YYYY-MM-DD'
+                  example: '2019-01-15'
+                  type: string
+                move_date:
+                  description: 'Move-in date in the format: YYYY-MM-DD'
+                  example: '2019-02-01'
+                  type: string
+                name:
+                  type: string
+                  example: Mustermann
+                first_name:
+                  type: string
+                  example: Max
+                address_street:
+                  type: string
+                  example: Gaudystraße
+                address_snumber:
+                  type: string
+                  example: "26A"
+                address_zip:
+                  type: string
+                  example: "10439"
+                address_city:
+                  type: string
+                  example: 'Berlin'
+                is_temporary:
+                  description: 'Contract is temporary? 1 Yes, 0 No>'
+                  type: string
+                  enum:
+                    - "0"
+                    - "1"
+                postal_dest:
+                  description: |
+                    Where should the guarantee document be sent: 0 current Applicant address (lessee), 1 new address (apartment), 1 Landlord's Address (lessor)
+                  type: string
+                  enum:
+                    - "0"
+                    - "1"
+                    - "2"
+                sum_rent:
+                  description: 'Monthly cold rent in the format: 1.000,00'
+                  type: string
+                  example: '500,00'
+            banking_account_attributes:
+              type: object
+              required:
+                - holder_name
+                - holder_firstname
+                - holder_company
+                - bank_name
+                - iban
+              properties:
+                holder_name:
+                  type: string
+                  example: Mustermann
+                holder_firstname:
+                  type: string
+                  example: Max
+                holder_company:
+                  type: string
+                  example: Muster, GmbH
+                bank_name:
+                  type: string
+                  example: DKB
+                iban:
+                  type: string
+                  example: DE12500105170648489890
+    ApplicationResponse:
+      properties:
+        cid:
+          type: string
+          example: 7kH5lXW1QIid2q+c5Eq0qg==
+        state:
+          type: string
+          enum:
+            - not_completed_not_reservation
+          description: |
+            * `not_completed_not_reservation` - Application is ready for submission
+        id:
+          type: string
+          example: "10000005"
+        type:
+          type: string
+          example: TenancyRetail
+        brand:
+          type: string
+          example: kf
+        documents:
+          type: object
+          example: {}
+    ApplicationSubmissionResponse:
+      properties:
+        cid:
+          type: string
+          example: 7kH5lXW1QIid2q+c5Eq0qg==
+        state:
+          type: string
+          enum:
+            - completed_not_reservation_accepted
+            - completed_not_reservation_not_accepted
+            - completed_not_reservation_stopped
+            - completed_not_reservation_pending
+          description: |
+            * `completed_not_reservation_accepted` - Application was submitted and was accepted
+            * `completed_not_reservation_not_accepted` - Application was submitted and was NOT accepted
+            * `completed_not_reservation_stopped` - Application was submitted but a technical failure occurred.
+            * `completed_not_reservation_pending` - Application was submitted but manual processing required.
+        id:
+          type: string
+          example: "10000005"
+        type:
+          type: string
+          example: TenancyRetail
+        brand:
+          type: string
+          example: kf
+          enum:
+            - kf
+        documents:
+          type: object
+          properties:
+            tenancy_reservation_complete:
+              type: string
+              example: >-
+                […]/documents/5?file_location_hash=c5ffb9896bf5df93a454acb89737c79776c13e00af595e77cbce07dc27c5f39f
+    ApplicationErrorResponse:
+      properties:
+        error:
+          type: string
+          example: 'lessee_attributes.terms_accepted : must be accepted'
+        error_struct:
+          description: |
+            a list of fields that have errors. For the above example, it would be a field named 'lessee_attributes.terms_accepted' with the value of an array, with a single string, 'must be accepted'
+          type: object
+          # This could be better. See https://swagger.io/docs/specification/data-models/dictionaries/
+          # the returned object looks like this:
+          # {
+          #   "error": "lessee_attributes.terms_accepted : must be accepted",
+          #   "error_struct": {
+          #     "lessee_attributes.terms_accepted": [
+          #       "must be accepted"
+          #     ]
+          #   }
+          # }
+          additionalProperties: true
+    Error:
+      type: object
+      properties:
+        # code:
+        #   type: string
+        message:
+          type: string
+      required:
+        # - code
+        - message
+    Unauthorized:
+      type: object
+      properties:
+        error:
+          example: credentials for auth missing
+          type: string
+
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
