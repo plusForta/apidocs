@@ -50,7 +50,7 @@ paths:
         - application
       security:
         - ApiKeyAuth: []
-      summary: creates an application
+      summary: creates or updates an application
       operationId: createApplication
       description: |
         Allows the creation of an application
@@ -78,7 +78,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
-        description: data for reservation
+        description: data for creating an Application
       callbacks:
         createContract:
           '{$request.body#/callbackUrl}':
@@ -88,30 +88,7 @@ paths:
                 content:
                   application/json:
                     schema:
-                      type: object
-                      properties:
-                        customId:
-                          type: string
-                          description: Customer supplied ID number
-                        orderId:
-                          type: number
-                          description: plusForta order ID
-                        contractNumber:
-                          type: string
-                          description: R+V supplied BürgschaftsNr
-                        contractStatus:
-                          type: string
-                          enum:
-                            - accepted
-                            - declined
-                          description: Insurance provider response to application
-                        contractStatusReason:
-                          description: Reason for decline
-                      required:
-                        - orderId
-                        - contractNumber
-                        - contractStatus
-                        - contractStatusReason
+                      $ref: '#/components/schemas/Callback'
               responses:
                 '200':
                   description: |
@@ -137,6 +114,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/cancelResponse'
+        '400':
+          description: validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationErrorResponse'
+        '401':
+          description: credentials for auth missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cancel'
+        description: 'data for cancelling an existing contract, must pass one of the following IDs: customId, contractId, or orderId'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -144,6 +139,31 @@ components:
       in: header
       name: X-Apikey
   schemas:
+    Callback:
+      type: object
+      properties:
+        customId:
+          type: string
+          description: Customer supplied ID number
+        orderId:
+          type: number
+          description: plusForta order ID
+        contractNumber:
+          type: string
+          description: R+V supplied BürgschaftsNr
+        contractStatus:
+          type: string
+          enum:
+            - accepted
+            - declined
+          description: Insurance provider response to application
+        contractStatusReason:
+          description: Reason for decline
+      required:
+        - orderId
+        - contractNumber
+        - contractStatus
+        - contractStatusReason
     Application:
       required:
         - callbackUrl
@@ -155,20 +175,27 @@ components:
       properties:
         callbackUrl:
           type: string
+          maxLength: 255
           description: 'URL to call upon contract creation'
           format: uri
           example: https://server.name/path
         partnerId:
           type: string
+          maxLength: 255
           description: predefined partner ID (maps to EPP ID)
+          example: 'xxx-3432-dasdf'
         customId:
           type: string
           description: Customer defined ID number for end to end tracking
+          maxLength: 255
+          example: 'DJF-KDF-KDL-KER'
         orderId:
           type: number
           description: '*Must* be passed on updates, *must* be blank for new submissions'
         lessee:
           type: array
+          maxItems: 2
+          description: Information about the person (or persons) renting the apartment
           items:
             type: object
             required:
@@ -186,22 +213,27 @@ components:
               firstName:
                 type: string
                 example: Max
+                maxLength: 255
               lastName:
                 type: string
                 example: Mustermann
+                maxLength: 255
               birthdate:
                 type: string
                 format: date
                 example: '1984-05-01'
+                maxLength: 10
               email:
                 type: string
                 format: email
                 example: 'max.mustermann@example.com'
+                maxLength: 255
               phone:
                 type: string
                 format: phonenumber
                 description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
                 example: "030 1234567"
+                maxLength: 255
               address:
                 type: object
                 required:
@@ -213,18 +245,23 @@ components:
                   street:
                     type: string
                     example: Gaudystraße
+                    maxLength: 255
                   houseNum:
                     type: string
                     example: 26A
+                    maxLength: 255
                   zip:
                     type: string
                     example: 10439
+                    maxLength: 16
                   city:
                     type: string
                     example: Berlin
+                    maxLength: 255
               nationality:
                 type: string
                 example: DE
+                maxLength: 2
                 format: 2 Digit ISO Country Code
         lessor:
           description: |
@@ -232,6 +269,7 @@ components:
           type: object
           properties:
             person:
+              description: Landlord
               type: object
               properties:
                 gender:
@@ -239,13 +277,17 @@ components:
                   enum:
                     - m
                     - f
+                  maxLength: 1
                 firstName:
                   type: string
                   example: Max
+                  maxLength: 255
                 lastName:
                   type: string
                   example: Mustermann
+                  maxLength: 255
             company:
+              description: Landlord company name (if this object is present, lessor.person is ignored)
               type: object
               required:
                 - name
@@ -253,9 +295,11 @@ components:
                 name:
                   type: string
                   example: Scrooge McDuck Rental
+                  maxLength: 255
                 name2:
                   type: string
                   example: Berlin Office
+                  maxLength: 255
             address:
               type: object
               required:
@@ -267,174 +311,163 @@ components:
                 street:
                   type: string
                   example: Gaudystraße
+                  maxLength: 255
                 houseNum:
                   type: string
                   example: 26A
+                  maxLength: 255
                 zip:
                   type: string
                   example: 10439
+                  maxLength: 16
                 city:
                   type: string
                   example: Berlin
+                  maxLength: 255
         apartment:
           type: object
           required:
-            - sum
-            - rental_date
-            - move_date
-            - address_street
-            - address_snumber
-            - address_zip
-            - address_city
-            - postal_dest
-            - sum_rent
+            - monthlyRent
+            - deposit
+            - address
+            - contractDates
           properties:
-            is_existing:
-              description: Normally 0, 1 if Deposit has already been paid
-              type: string
-              enum:
-                - "0"
-                - "1"
-            sum:
-              description: 'Value of the deposit in the format: 1.000,00'
-              type: string
-              example: '1.500,00'
-            until_temporary:
-              description: 'if the rental contract is temporary (see is_temporary below), end date in the format: YYYY-MM-DD'
-              example: '2020-02-01'
-              type: string
-            rental_date:
-              description: 'Date contract was signed in the format: YYYY-MM-DD'
-              example: '2019-01-15'
-              type: string
-            move_date:
-              description: 'Move-in date in the format: YYYY-MM-DD'
-              example: '2019-02-01'
-              type: string
-            name:
-              type: string
-              example: Mustermann
-            first_name:
-              type: string
-              example: Max
-            address_street:
-              type: string
-              example: Gaudystraße
-            address_snumber:
-              type: string
-              example: "26A"
-            address_zip:
-              type: string
-              example: "10439"
-            address_city:
-              type: string
-              example: 'Berlin'
-            is_temporary:
-              description: 'Contract is temporary? 1 Yes, 0 No>'
-              type: string
-              enum:
-                - "0"
-                - "1"
-            postal_dest:
-              description: |
-                Where should the guarantee document be sent: 0 current Applicant address (lessee), 1 new address (apartment), 1 Landlord's Address (lessor)
-              type: string
-              enum:
-                - "0"
-                - "1"
-                - "2"
-            sum_rent:
-              description: 'Monthly cold rent in the format: 1.000,00'
-              type: string
-              example: '500,00'
-        banking_account_attributes:
+            depositPaid:
+              description: Set to true if Deposit has already been paid, assumed to be false if not present
+              type: boolean
+            monthlyRent:
+              description: 'Monthly cold rent'
+              type: number
+              format: float
+              example: 500.00
+            deposit:
+              description: 'Deposit Amount'
+              type: number
+              format: float
+              example: 1500.00
+            contractDates:
+              type: object
+              required:
+                - start
+                - signed
+              properties:
+                start:
+                  description: 'Start of the rental contract in the format: YYYY-MM-DD'
+                  example: '2019-02-01'
+                  format: date
+                  type: string
+                end:
+                  description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
+                  example: '2020-02-01'
+                  format: date
+                  type: string
+                signed:
+                  description: 'Date contract was signed in the format: YYYY-MM-DD'
+                  example: '2019-01-15'
+                  format: date
+                  type: string
+            address:
+              type: object
+              required:
+                - street
+                - houseNum
+                - zip
+                - city
+              description: Address of the rental properity
+              properties:
+                street:
+                  type: string
+                  example: Gaudystraße
+                  maxLength: 255
+                houseNum:
+                  type: string
+                  example: 26A
+                  maxLength: 255
+                zip:
+                  type: string
+                  example: 10439
+                  maxLength: 16
+                city:
+                  type: string
+                  example: Berlin
+                  maxLength: 255
+        bankAccount:
           type: object
           required:
-            - holder_name
-            - holder_firstname
-            - holder_company
-            - bank_name
+            - owner
             - iban
           properties:
-            holder_name:
-              type: string
-              example: Mustermann
-            holder_firstname:
-              type: string
-              example: Max
-            holder_company:
-              type: string
-              example: Muster, GmbH
-            bank_name:
+            owner:
+              type: object
+              description: Account owner
+              properties:
+                firstName:
+                  type: string
+                  example: Max
+                lastName:
+                  type: string
+                  example: Mustermann
+            bankName:
+              description: Name of the bank if available
               type: string
               example: DKB
             iban:
               type: string
+              format: iban
               example: DE12500105170648489890
-            payment:
+            paymentFrequency:
               type: string
-              description: '12 for monthly payments | 1 for annual payment'
               enum:
-                - "1"
-                - "12"
+                - 'monthly'
+                - 'yearly'
     ApplicationResponse:
       properties:
-        cid:
+        customId:
           type: string
-          example: 7kH5lXW1QIid2q+c5Eq0qg==
-        state:
+          description: Customer defined ID number for end to end tracking
+          maxLength: 255
+          example: 'DJF-KDF-KDL-KER'
+        orderId:
+          type: number
+          description: plusForta generated ID for this application
+          example: 1043324
+        contractId:
           type: string
-          enum:
-            - not_completed_not_reservation
-          description: |
-            * `not_completed_not_reservation` - Application is ready for submission
-        id:
-          type: string
-          example: "10000005"
-        type:
-          type: string
-          example: TenancyRetail
-        brand:
-          type: string
-          example: kf
-        documents:
-          type: object
-          example: {}
-    cancelResponse:  # @todo
+          description: Insurer generated contract ID number
+          example: 'VS3432345-00001'
+    Cancel:
+      description: Requires one of customId, contractId, or orderId
       properties:
-        cid:
+        customId:
           type: string
-          example: 7kH5lXW1QIid2q+c5Eq0qg==
-        state:
+          description: Customer defined ID number for end to end tracking
+          maxLength: 255
+          example: 'DJF-KDF-KDL-KER'
+        orderId:
+          type: number
+          description: plusForta generated ID for this application
+          example: 1043324
+        contractId:
           type: string
-          enum:
-            - completed_not_reservation_accepted
-            - completed_not_reservation_not_accepted
-            - completed_not_reservation_stopped
-            - completed_not_reservation_pending
-          description: |
-            * `completed_not_reservation_accepted` - Application was submitted and was accepted
-            * `completed_not_reservation_not_accepted` - Application was submitted and was NOT accepted
-            * `completed_not_reservation_stopped` - Application was submitted but a technical failure occurred.
-            * `completed_not_reservation_pending` - Application was submitted but manual processing required.
-        id:
+          description: Insurer generated contract ID number
+          example: 'VS3432345-00001'
+    cancelResponse:
+      required:
+        - orderId
+      properties:
+        customId:
           type: string
-          example: "10000005"
-        type:
+          description: Customer defined ID number for end to end tracking
+          maxLength: 255
+          example: 'DJF-KDF-KDL-KER'
+        orderId:
+          type: number
+          description: plusForta generated ID for this application
+          example: 1043324
+        contractId:
           type: string
-          example: TenancyRetail
-        brand:
-          type: string
-          example: kf
-          enum:
-            - kf
-        documents:
-          type: object
-          properties:
-            tenancy_reservation_complete:
-              type: string
-              example: >-
-                […]/documents/5?file_location_hash=c5ffb9896bf5df93a454acb89737c79776c13e00af595e77cbce07dc27c5f39f
+          description: Insurer generated contract ID number
+          example: 'VS3432345-00001'
     ApplicationErrorResponse:
       properties:
         error:
@@ -479,4 +512,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-D
