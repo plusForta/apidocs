@@ -2,7 +2,10 @@ openapi: 3.0.0
 info:
   description: |
     ## Overview
-    The PlusForta ERP API is for the use of our ERP customers of the BK01 application.
+    The PlusForta ERP API is for the use of our ERP customers.
+
+    ## How to sign up
+    For more information, please contact us at info@plusforta.de.
 
     ## How to use
 
@@ -22,13 +25,9 @@ info:
 
     Once you have the necessary credentials, you may feel free to start testing.  We recommend using the staging environment unless told otherwise.
 
-    ## How to sign up
-    For more information, please contact us at info@plusforta.de.
-
     ## Changelog
-    * v0.0.3
-      * first draft
-  version: "0.0.3alpha"
+    * alpha - document creation
+  version: "0.0.4alpha"
   title: ERP API
   contact:
     email: admin@plusforta.de
@@ -84,6 +83,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -148,6 +148,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -213,6 +214,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
