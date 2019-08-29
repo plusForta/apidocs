@@ -18,6 +18,10 @@ info:
 
     *Note: If you pass more than one identifier, they will be checked against each other.  If they don't match, a failure will be generated.*
 
+    ## Notes about testing..
+
+    Once you have the necessary credentials, you may feel free to start testing.  We recommend using the staging environment unless told otherwise.
+
     ## How to sign up
     For more information, please contact us at info@plusforta.de.
 
@@ -125,6 +129,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+        '403':
+          description: 'No matching application found.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       requestBody:
         content:
           application/json:
@@ -165,7 +175,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cancelResponse'
+                $ref: '#/components/schemas/CancelResponse'
         '400':
           description: validation failure
           content:
@@ -178,6 +188,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+        '403':
+          description: 'No matching contract found.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       requestBody:
         content:
           application/json:
@@ -511,7 +527,7 @@ components:
           type: string
           description: Insurer generated contract ID number
           example: 'VS3432345-00001'
-    cancelResponse:
+    CancelResponse:
       required:
         - orderId
       properties:
@@ -532,31 +548,25 @@ components:
       properties:
         error:
           type: string
-          example: 'lessee_attributes.terms_accepted : must be accepted'
-        error_struct:
+          example: 'Validation Error'
+        errorList:
           description: |
-            a list of fields that have errors. For the above example, it would be a field named 'lessee_attributes.terms_accepted' with the value of an array, with a single string, 'must be accepted'
+            a list of fields with an array of errors.
           type: object
-          # This could be better. See https://swagger.io/docs/specification/data-models/dictionaries/
-          # the returned object looks like this:
-          # {
-          #   "error": "lessee_attributes.terms_accepted : must be accepted",
-          #   "error_struct": {
-          #     "lessee_attributes.terms_accepted": [
-          #       "must be accepted"
-          #     ]
-          #   }
-          # }
-          additionalProperties: true
+          properties:
+            apartment.address.street:
+              type: array
+              items:
+                type: string
+                example: Required Field Missing
     Error:
       type: object
       properties:
-        # code:
-        #   type: string
+        code:
+          type: string
         message:
           type: string
       required:
-        # - code
         - message
     Unauthorized:
       type: object
@@ -564,7 +574,6 @@ components:
         error:
           example: credentials for auth missing
           type: string
-
   responses:
     NotFound:
       description: The specified resource was not found
