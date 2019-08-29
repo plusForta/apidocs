@@ -50,10 +50,10 @@ paths:
         - application
       security:
         - ApiKeyAuth: []
-      summary: creates or updates an application
+      summary: creates an application
       operationId: createApplication
       description: |
-        Allows the creation of an application
+        Creates an application
       responses:
         '200':
           description: application created
@@ -79,6 +79,58 @@ paths:
             schema:
               $ref: '#/components/schemas/Application'
         description: data for creating an Application
+      callbacks:
+        createContract:
+          '{$request.body#/callbackUrl}':
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Callback'
+              responses:
+                '200':
+                  description: |
+                    Everything is great!  Use this error code to let us know you have received the message
+                '400':
+                  description: |
+                    Everything is bad! Use this error code to let us know you can't handle the news right now
+                    and we should try again later.
+    patch:
+      tags:
+        - application
+      security:
+        - ApiKeyAuth: []
+      summary: updates an application
+      operationId: updateApplication
+      description: |
+        Updates an existing application
+      responses:
+        '200':
+          description: application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationErrorResponse'
+        '401':
+          description: credentials for auth missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationUpdate'
+        description: Application Data
       callbacks:
         createContract:
           '{$request.body#/callbackUrl}':
@@ -189,9 +241,6 @@ components:
           description: Customer defined ID number for end to end tracking
           maxLength: 255
           example: 'DJF-KDF-KDL-KER'
-        orderId:
-          type: number
-          description: '*Must* be passed on updates, *must* be blank for new submissions'
         lessee:
           type: array
           maxItems: 2
@@ -420,6 +469,17 @@ components:
               enum:
                 - 'monthly'
                 - 'yearly'
+    ApplicationUpdate:
+      allOf:
+        - type: object
+          required:
+            - orderId
+          properties:
+            orderId:
+              type: number
+              description: 'Previously assigned plusforta ID'
+              example: 1043324
+        - $ref: '#/components/schemas/Application'
     ApplicationResponse:
       properties:
         customId:
