@@ -26,9 +26,9 @@ info:
     For more information, please contact us at info@plusforta.de.
 
     ## Changelog
-    * v0.0.1
+    * v0.0.3
       * first draft
-  version: "0.0.1alpha"
+  version: "0.0.3alpha"
   title: ERP API
   contact:
     email: admin@plusforta.de
@@ -77,6 +77,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+        '500':
+          description: 'Internal Processing Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       requestBody:
         content:
           application/json:
@@ -131,6 +137,12 @@ paths:
                 $ref: '#/components/schemas/Unauthorized'
         '403':
           description: 'No matching application found.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 'Internal Processing Error'
           content:
             application/json:
               schema:
@@ -190,6 +202,12 @@ paths:
                 $ref: '#/components/schemas/Unauthorized'
         '403':
           description: 'No matching contract found.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 'Internal Processing Error'
           content:
             application/json:
               schema:
@@ -546,19 +564,30 @@ components:
           example: 'VS3432345-00001'
     ApplicationErrorResponse:
       properties:
-        error:
-          type: string
-          example: 'Validation Error'
-        errorList:
-          description: |
-            a list of fields with an array of errors.
-          type: object
-          properties:
-            apartment.address.street:
-              type: array
-              items:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              errorType:
                 type: string
-                example: Required Field Missing
+                example: 'Validation'
+              errorList:
+                description: |
+                  a list of fields with an array of errors.
+                type: object
+                properties:
+                  apartment.address.street:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: 'REQFLD'
+                        message:
+                          type: string
+                          example: 'Required Field lessee.address.street missing'
     Error:
       type: object
       properties:
