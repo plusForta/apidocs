@@ -547,6 +547,12 @@ components:
           type: string
           description: Insurer generated contract ID number
           example: 'VS3432345-00001'
+        effectiveDate:
+          type: string
+          format: date
+          example: '1984-05-01'
+          maxLength: 10
+          description: The future date the coverage should be ended.  If blank, effective immediately.
     CancelResponse:
       required:
         - orderId
