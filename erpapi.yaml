@@ -27,7 +27,7 @@ info:
 
     ## Changelog
     * alpha - document creation
-  version: "0.0.4alpha"
+  version: "0.0.5alpha"
   title: ERP API
   contact:
     email: admin@plusforta.de
@@ -434,7 +434,6 @@ components:
               type: object
               required:
                 - start
-                - signed
               properties:
                 start:
                   description: 'Start of the rental contract in the format: YYYY-MM-DD'
