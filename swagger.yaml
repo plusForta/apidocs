@@ -57,6 +57,8 @@ info:
     * completed_reservation_not_accepted: Application from Reservation, Rejected
 
     ## Changelog
+    * v2.0.1
+      * Add Nationality field to lessee_attributes
     * v2.0.0
       * Switch to new product kfde_03_2019 (**previous product kfde_04_2016 sunset by provider on 15.6.2019**).
         * lessor_attributes address now optional
@@ -65,7 +67,7 @@ info:
       * Removal of the /create_reservation endpoint (POST /reservation instead)
       * Removal of the KFX product
 
-  version: "2.0.0"
+  version: "2.0.1"
   title: Reservation and application API
   contact:
     email: marc.runkel@plusforta.de
@@ -426,6 +428,7 @@ components:
                   - address_zip
                   - address_city
                   - terms_accepted
+                  - nationality
                 properties:
                   gender:
                     type: string
@@ -463,14 +466,19 @@ components:
                   address_city:
                     type: string
                     example: Berlin
+                  nationality:
+                    type: string
+                    example: DE
+                    maxLength: 2
+                    format: 2 Digit ISO Country Code
                   terms_accepted:
                     type: integer
                     description: 1 accepted, 0 not accepted
                     enum:
                       - "0"
                       - "1"
-    ReservationResponse:
-      properties:
+  ReservationResponse:
+    properties:
         cid:
           type: string
           example: 7kH5lXW1QIid2q+c5Eq0qg==
