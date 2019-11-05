@@ -412,7 +412,6 @@ components:
         apartment:
           type: object
           required:
-            - monthlyRent
             - deposit
             - address
             - contractDates
