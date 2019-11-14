@@ -481,15 +481,9 @@ components:
             - iban
           properties:
             owner:
-              type: object
+              type: string
               description: Account owner
-              properties:
-                firstName:
-                  type: string
-                  example: Max
-                lastName:
-                  type: string
-                  example: Mustermann
+              example: 'Max Mustermann'
             bankName:
               description: Name of the bank if available
               type: string
