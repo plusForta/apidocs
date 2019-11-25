@@ -9,13 +9,29 @@ info:
 
     ## How to use
 
-    The process is quite simple.  You can submit an application data under the ```/application``` endpoint.  You will recieve an ```OrderID``` for this application.
+    ### Normal Process
+    The process is quite simple.
+    1. You submit application data under the ```/application``` endpoint with a POST.
+    1. The system returns an ```OrderID``` for this application.
+    1. Will now send an email to the end user prompting them to complete the application online and agree to the terms and conditions.
+        1. Note: until the end user starts this process, the application may be updated by resubmitting the data with the ```orderId``` generated upon initial submission.
+    1. After the insurance company processes the application, we will update the application with the new status
 
-    This generates an email to the end user prompting them to complete the application online and agree to the terms and conditions.
+    ### Callbacks
 
-    Until the end user starts this process, the application may be updated by resubmitting the data with the ```orderId``` generated upon initial submission.
+    You can pass us a callback URL when creating the application. If you do so you will receive callbacks at certain points in the lifecycle of the application.
+    1. When the customer submits the application to the insurance provider we will send the ```applicationSubmited``` callback
+    1. When the insurance provider gives us a final answer on the application we will send the ```applicationProcessed``` callback
+    1. When the email address is invalid or otherwise undeliverable we will send the ```emailBounced``` callback
 
-    Once the enduser completes the process, you will receive a callback at the requested URL informing you with the result of the application, either accpeted or declined.
+    ### Custom ID
+
+    We provide you with the ability to define a custom ID when creating the application data.  This custom ID will then be returned with all requests and can be used
+    to retrive the matching record.
+
+    **It is up the enduser to ensure the uniqueness of the custom ID field.**  We perform no processing on this field whatsoever.
+
+    ## Cancelations
 
     To end the created Contract, simply call the ```cancel``` endpoint with any of the ```orderId```, ```customId```, or ```contractNumber``` identifiers.
 
@@ -27,7 +43,24 @@ info:
 
     ## Changelog
     * alpha - document creation
-  version: "0.0.5alpha"
+    * 0.0.1alpha - internal only
+    * 0.0.2alpha - internal only
+    * 0.0.3alpha
+        * improve error codes
+    * 0.0.4alpha
+        * added effective date to /cancel.
+    * 0.0.5alpha
+        * Correct account owner
+        * monthlyRent now optional
+        * Rental contract start is now optional
+    * 0.0.6alpha
+        * callbackURL is now optional.  If none supplied, callbacks are disabled.
+        * added 403 status for PATCH after application has been submitted for processing
+        * 404 status correctly coded
+        * expanded callbacks to include a callback on submission to the insurance company and a callback on email bounces
+        * add discussion about callbacks to header documentation
+        * added GET method for application endpoint
+  version: "0.0.6alpha"
   title: ERP API
   contact:
     email: admin@plusforta.de
@@ -48,6 +81,60 @@ servers:
     description: Developer Environment (has the latest code, maybe broken)
 paths:
   /application:
+    get:
+      tags:
+        - application
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieves an application
+      operationId: getApplication
+      description: |
+        Retrieves an application
+      responses:
+        '200':
+          description: application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '400':
+          description: validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationErrorResponse'
+        '401':
+          description: credentials for auth missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: 'No matching application found.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '500':
+          description: 'Internal Processing Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+        - name: orderId
+          required: false
+          example: '3034033'
+          schema:
+            type: string
+          description: 'The plusForta generated order ID'
+          in: query
+        - name: customId
+          required: false
+          example: 'ACS3443-342'
+          schema:
+            type: string
+          in: query
     post:
       tags:
         - application
@@ -90,7 +177,7 @@ paths:
               $ref: '#/components/schemas/Application'
         description: data for creating an Application
       callbacks:
-        createContract:
+        applicationSubmitted:
           '{$request.body#/callbackUrl}':
             post:
               requestBody:
@@ -98,7 +185,41 @@ paths:
                 content:
                   application/json:
                     schema:
-                      $ref: '#/components/schemas/Callback'
+                      $ref: '#/components/schemas/CallbackSubmit'
+              responses:
+                '200':
+                  description: |
+                    Everything is great!  Use this error code to let us know you have received the message
+                '400':
+                  description: |
+                    Everything is bad! Use this error code to let us know you can't handle the news right now
+                    and we should try again later.
+        applicationProcessed:
+          '{$request.body#/callbackUrl}':
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/CallbackProcessed'
+              responses:
+                '200':
+                  description: |
+                    Everything is great!  Use this error code to let us know you have received the message
+                '400':
+                  description: |
+                    Everything is bad! Use this error code to let us know you can't handle the news right now
+                    and we should try again later.
+        emailBounced:
+          '{$request.body#/callbackUrl}':
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/CallbackBounce'
               responses:
                 '200':
                   description: |
@@ -115,7 +236,7 @@ paths:
       summary: updates an application
       operationId: updateApplication
       description: |
-        Updates an existing application
+        Updates an existing application, also causes a new email to be sent to the customer.  Only possible before the customer has submitted the application.
       responses:
         '200':
           description: application updated
@@ -136,11 +257,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
         '403':
+          description: request denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Denied'
+        '404':
           description: 'No matching application found.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/NotFound'
         '500':
           description: 'Internal Processing Error'
           content:
@@ -163,7 +290,7 @@ paths:
                 content:
                   application/json:
                     schema:
-                      $ref: '#/components/schemas/Callback'
+                      $ref: '#/components/schemas/CallbackProcessed'
               responses:
                 '200':
                   description: |
@@ -201,12 +328,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
-        '403':
+        '404':
           description: 'No matching contract found.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/NotFound'
         '500':
           description: 'Internal Processing Error'
           content:
@@ -227,15 +354,23 @@ components:
       in: header
       name: X-Apikey
   schemas:
-    Callback:
+    CallbackProcessed:
+      description: Generated when an application has a decision from the insurance provider
       type: object
       properties:
+        type:
+          type: string
+          example: 'processed'
+          enum:
+            - 'processed'
         customId:
           type: string
           description: Customer supplied ID number
+          example: "34234343XRA"
         orderId:
           type: number
           description: plusForta order ID
+          example: '102343'
         contractNumber:
           type: string
           description: R+V supplied BürgschaftsNr
@@ -252,15 +387,60 @@ components:
         - contractNumber
         - contractStatus
         - contractStatusReason
+    CallbackSubmit:
+      type: object
+      properties:
+        type:
+          type: string
+          example: 'submitted'
+          enum:
+            - 'submitted'
+        customId:
+          type: string
+          description: Customer supplied ID number
+          example: "34234343XRA"
+        orderId:
+          type: number
+          description: plusForta order ID
+          example: '102343'
+      required:
+        - orderId
+        - type
+    CallbackBounce:
+      type: object
+      properties:
+        type:
+          type: string
+          example: 'bounced'
+          enum:
+            - 'bounced'
+        customId:
+          type: string
+          description: Customer supplied ID number
+        orderId:
+          type: number
+          description: plusForta order ID
+          example: '102343'
+      required:
+        - orderId
+        - contractStatus
+        - contractStatusReason
     Application:
       required:
-        - callbackUrl
         - partnerId
         - lessee
         - lessor
         - apartment
         - bankAccount
       properties:
+        status:
+          type: string
+          readOnly: true
+          enum:
+            - accepted
+            - declined
+            - submitted
+            - bounced
         callbackUrl:
           type: string
           maxLength: 255
@@ -597,12 +777,35 @@ components:
           type: string
       required:
         - message
+    NotFound:
+      type: object
+      properties:
+        code:
+          type: string
+          example: 'NOTFOUND'
+        message:
+          type: string
+          example: 'Object not found'
+      required:
+        - message
     Unauthorized:
       type: object
       properties:
-        error:
-          example: credentials for auth missing
+        code:
           type: string
+          example: 'NOAUTH'
+        message:
+          type: string
+          example: 'Credentials for auth missing'
+    Denied:
+      type: object
+      properties:
+        code:
+          type: string
+          example: 'BLOCKED'
+        message:
+          type: string
+          example: 'Requested action is not possible'
   responses:
     NotFound:
       description: The specified resource was not found
