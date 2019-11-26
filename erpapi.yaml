@@ -437,10 +437,12 @@ components:
           type: string
           readOnly: true
           enum:
+            - pending
             - accepted
             - declined
             - submitted
             - bounced
+            - canceled
         callbackUrl:
           type: string
           maxLength: 255
