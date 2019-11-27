@@ -442,7 +442,7 @@ components:
             - declined
             - submitted
             - bounced
-            - canceled
+            - cancelled
         callbackUrl:
           type: string
           maxLength: 255
