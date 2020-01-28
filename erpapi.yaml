@@ -73,12 +73,12 @@ tags:
   - name: cancel
     description: Submit the cancellation of an existing rental deposit guarantee
 servers:
-  - url: 'https://oa-stage.pfdev.de/api/erp'
+  - url: 'https://stage.aareal-aval.de/api/erp'
     description: Staging Environment usually mirrors Production, except when we are about to launch (then it's the next version)
-  - url: 'https://api.kautionsfrei.de/api/erp'
-    description: Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )
-  - url: 'https://oa-dev.pfdev.de/api/erp'
+  - url: 'https://dev.aareal-aval.de/api/erp'
     description: Developer Environment (has the latest code, maybe broken)
+  - url: 'https://aareal-aval.de/api/erp'
+    description: Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )
 paths:
   /application:
     get:
