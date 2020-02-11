@@ -451,7 +451,7 @@ components:
           example: https://server.name/path
         partnerId:
           type: string
-          maxLength: 255
+          maxLength: 25
           description: predefined partner ID (maps to EPP ID)
           example: 'xxx-3432-dasdf'
         customId:
