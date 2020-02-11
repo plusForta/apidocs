@@ -346,7 +346,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Cancel'
-        description: 'data for cancelling an existing contract, must pass one of the following IDs: customId, contractId, or orderId'
+        description: 'data for cancelling an existing contract, must pass one of the following IDs: customId, contractNumber, or orderId'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -701,12 +701,12 @@ components:
           type: number
           description: plusForta generated ID for this application
           example: 1043324
-        contractId:
+        contractNumber:
           type: string
           description: Insurer generated contract ID number
           example: 'VS3432345-00001'
     Cancel:
-      description: Requires one of customId, contractId, or orderId
+      description: Requires one of customId, contractNumber, or orderId
       properties:
         customId:
           type: string
@@ -717,7 +717,7 @@ components:
           type: number
           description: plusForta generated ID for this application
           example: 1043324
-        contractId:
+        contractNumber:
           type: string
           description: Insurer generated contract ID number
           example: 'VS3432345-00001'
@@ -740,7 +740,7 @@ components:
           type: number
           description: plusForta generated ID for this application
           example: 1043324
-        contractId:
+        contractNumber:
           type: string
           description: Insurer generated contract ID number
           example: 'VS3432345-00001'
