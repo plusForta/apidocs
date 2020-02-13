@@ -31,6 +31,11 @@ info:
 
     **It is up the enduser to ensure the uniqueness of the custom ID field.**  We perform no processing on this field whatsoever.
 
+    ### Security Nonce
+
+    You can provide us with a securitynonce header in your POST or PATCH call and we will return the token in all of our callbacks.
+    This token assures you that these responses match your original action.
+
     ## Cancelations
 
     To end the created Contract, simply call the ```cancel``` endpoint with any of the ```orderId```, ```customId```, or ```contractNumber``` identifiers.
@@ -60,7 +65,12 @@ info:
         * expanded callbacks to include a callback on submission to the insurance company and a callback on email bounces
         * add discussion about callbacks to header documentation
         * added GET method for application endpoint
-  version: "0.0.6alpha"
+    * 0.0.7
+        * Changed PartnerId maximum length to 25
+        * fixed contractId typo to contractNumber
+    * 0.0.8
+        * Re-added documentation about Security Nonce header
+  version: "0.0.8"
   title: ERP API
   contact:
     email: admin@plusforta.de
@@ -140,6 +150,14 @@ paths:
         - application
       security:
         - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: securitynonce
+          schema:
+            type: string
+            maxLength: 255
+          required: false
+          description: Optional nonce to be returned in callbacks.
       summary: creates an application
       operationId: createApplication
       description: |
@@ -233,6 +251,14 @@ paths:
         - application
       security:
         - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: securitynonce
+          schema:
+            type: string
+            maxLength: 255
+          required: false
+          description: Optional nonce to be returned in callbacks.
       summary: updates an application
       operationId: updateApplication
       description: |
@@ -382,6 +408,10 @@ components:
           description: Insurance provider response to application
         contractStatusReason:
           description: Reason for decline
+        securityNonce:
+          type: string
+          maxLength: 255
+          description: Optionally returned nonce (if provided in initial POST/PATCH)
       required:
         - orderId
         - contractNumber
@@ -403,6 +433,10 @@ components:
           type: number
           description: plusForta order ID
           example: '102343'
+        securityNonce:
+          type: string
+          maxLength: 255
+          description: Optionally returned nonce (if provided in initial POST/PATCH)
       required:
         - orderId
         - type
@@ -421,6 +455,10 @@ components:
           type: number
           description: plusForta order ID
           example: '102343'
+        securityNonce:
+          type: string
+          maxLength: 255
+          description: Optionally returned nonce (if provided in initial POST/PATCH)
       required:
         - orderId
         - contractStatus
