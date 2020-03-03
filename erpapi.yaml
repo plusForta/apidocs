@@ -70,7 +70,9 @@ info:
         * fixed contractId typo to contractNumber
     * 0.0.8
         * Re-added documentation about Security Nonce header
-  version: "0.0.8"
+    * 0.0.9
+        * Changed status codes for POST actions to 201
+  version: "0.0.9"
   title: ERP API
   contact:
     email: admin@plusforta.de
@@ -86,7 +88,7 @@ servers:
   - url: 'https://stage.aareal-aval.de/api/erp'
     description: Staging Environment usually mirrors Production, except when we are about to launch (then it's the next version)
   - url: 'https://dev.aareal-aval.de/api/erp'
-    description: Developer Environment (has the latest code, maybe broken)
+    description: Developer Environment (has the latest code, may be broken)
   - url: 'https://aareal-aval.de/api/erp'
     description: Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )
 paths:
@@ -102,7 +104,7 @@ paths:
         Retrieves an application
       responses:
         '200':
-          description: application created
+          description: application returned
           content:
             application/json:
               schema:
@@ -163,7 +165,7 @@ paths:
       description: |
         Creates an application
       responses:
-        '200':
+        '201':
           description: application created
           content:
             application/json:
@@ -205,7 +207,7 @@ paths:
                     schema:
                       $ref: '#/components/schemas/CallbackSubmit'
               responses:
-                '200':
+                '204':
                   description: |
                     Everything is great!  Use this error code to let us know you have received the message
                 '400':
@@ -222,7 +224,7 @@ paths:
                     schema:
                       $ref: '#/components/schemas/CallbackProcessed'
               responses:
-                '200':
+                '204':
                   description: |
                     Everything is great!  Use this error code to let us know you have received the message
                 '400':
@@ -239,7 +241,7 @@ paths:
                     schema:
                       $ref: '#/components/schemas/CallbackBounce'
               responses:
-                '200':
+                '204':
                   description: |
                     Everything is great!  Use this error code to let us know you have received the message
                 '400':
@@ -336,7 +338,7 @@ paths:
       description: |
         Cancels an existing rental deposit guarantee
       responses:
-        '200':
+        '202':
           description: obligation released
           content:
             application/json:
