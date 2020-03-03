@@ -338,7 +338,7 @@ paths:
       description: |
         Cancels an existing rental deposit guarantee
       responses:
-        '201':
+        '202':
           description: obligation released
           content:
             application/json:
