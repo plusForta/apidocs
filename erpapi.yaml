@@ -1,857 +1,3201 @@
 openapi: 3.0.0
 info:
-  description: |
-    ## Overview
-    The PlusForta ERP API is for the use of our ERP customers.
-
-    ## How to sign up
-    For more information, please contact us at info@plusforta.de.
-
-    ## How to use
-
-    ### Normal Process
-    The process is quite simple.
-    1. You submit application data under the ```/application``` endpoint with a POST.
-    1. The system returns an ```OrderID``` for this application.
-    1. Will now send an email to the end user prompting them to complete the application online and agree to the terms and conditions.
-        1. Note: until the end user starts this process, the application may be updated by resubmitting the data with the ```orderId``` generated upon initial submission.
-    1. After the insurance company processes the application, we will update the application with the new status
-
-    ### Callbacks
-
-    You can pass us a callback URL when creating the application. If you do so you will receive callbacks at certain points in the lifecycle of the application.
-    1. When the customer submits the application to the insurance provider we will send the ```applicationSubmited``` callback
-    1. When the insurance provider gives us a final answer on the application we will send the ```applicationProcessed``` callback
-    1. When the email address is invalid or otherwise undeliverable we will send the ```emailBounced``` callback
-
-    ### Custom ID
-
-    We provide you with the ability to define a custom ID when creating the application data.  This custom ID will then be returned with all requests and can be used
-    to retrive the matching record.
-
-    **It is up the enduser to ensure the uniqueness of the custom ID field.**  We perform no processing on this field whatsoever.
-
-    ### Security Nonce
-
-    You can provide us with a securitynonce header in your POST or PATCH call and we will return the token in all of our callbacks.
-    This token assures you that these responses match your original action.
-
-    ## Cancelations
-
-    To end the created Contract, simply call the ```cancel``` endpoint with any of the ```orderId```, ```customId```, or ```contractNumber``` identifiers.
-
-    *Note: If you pass more than one identifier, they will be checked against each other.  If they don't match, a failure will be generated.*
-
-    ## Notes about testing..
-
-    Once you have the necessary credentials, you may feel free to start testing.  We recommend using the staging environment unless told otherwise.
-
-    ## Changelog
-    * alpha - document creation
-    * 0.0.1alpha - internal only
-    * 0.0.2alpha - internal only
-    * 0.0.3alpha
-        * improve error codes
-    * 0.0.4alpha
-        * added effective date to /cancel.
-    * 0.0.5alpha
-        * Correct account owner
-        * monthlyRent now optional
-        * Rental contract start is now optional
-    * 0.0.6alpha
-        * callbackURL is now optional.  If none supplied, callbacks are disabled.
-        * added 403 status for PATCH after application has been submitted for processing
-        * 404 status correctly coded
-        * expanded callbacks to include a callback on submission to the insurance company and a callback on email bounces
-        * add discussion about callbacks to header documentation
-        * added GET method for application endpoint
-    * 0.0.7
-        * Changed PartnerId maximum length to 25
-        * fixed contractId typo to contractNumber
-    * 0.0.8
-        * Re-added documentation about Security Nonce header
-    * 0.0.9
-        * Changed status codes for POST actions to 201
-  version: "0.0.9"
-  title: ERP API
+  title: 'ERP API'
+  description: "## Overview\nThe PlusForta ERP API is for the use of our ERP customers.\n\n## How to sign up\nFor more information, please contact us at info@plusforta.de.\n\n## How to use\n\n### Normal Process\nThe process is quite simple.\n1. You submit application data under the ```/application``` endpoint with a POST.\n1. The system returns an ```OrderID``` for this application.\n1. Will now send an email to the end user prompting them to complete the application online and agree to the terms and conditions.\n    1. Note: until the end user starts this process, the application may be updated by resubmitting the data with the ```orderId``` generated upon initial submission.\n1. After the insurance company processes the application, we will update the application with the new status\n\n### Callbacks\n\nYou can pass us a callback URL when creating the application. If you do so you will receive callbacks at certain points in the lifecycle of the application.\n1. When the customer submits the application to the insurance provider we will send the ```applicationSubmited``` callback\n1. When the insurance provider gives us a final answer on the application we will send the ```applicationProcessed``` callback\n1. When the email address is invalid or otherwise undeliverable we will send the ```emailBounced``` callback\n\n### Custom ID\n\nWe provide you with the ability to define a custom ID when creating the application data.  This custom ID will then be returned with all requests and can be used\nto retrive the matching record.\n\n**It is up the enduser to ensure the uniqueness of the custom ID field.**  We perform no processing on this field whatsoever.\n\n### Security Nonce\n\nYou can provide us with a securitynonce header in your POST or PATCH call and we will return the token in all of our callbacks.\nThis token assures you that these responses match your original action.\n\n## Cancelations\n\nTo end the created Contract, simply call the ```cancel``` endpoint with any of the ```orderId```, ```customId```, or ```contractNumber``` identifiers.\n\n*Note: If you pass more than one identifier, they will be checked against each other.  If they don't match, a failure will be generated.*\n\n## Notes about testing..\n\nOnce you have the necessary credentials, you may feel free to start testing.  We recommend using the staging environment unless told otherwise.\n\n## Changelog\n* alpha - document creation\n* 0.0.1alpha - internal only\n* 0.0.2alpha - internal only\n* 0.0.3alpha\n    * improve error codes\n* 0.0.4alpha\n    * added effective date to /cancel.\n* 0.0.5alpha\n    * Correct account owner\n    * monthlyRent now optional\n    * Rental contract start is now optional\n* 0.0.6alpha\n    * callbackURL is now optional.  If none supplied, callbacks are disabled.\n    * added 403 status for PATCH after application has been submitted for processing\n    * 404 status correctly coded\n    * expanded callbacks to include a callback on submission to the insurance company and a callback on email bounces\n    * add discussion about callbacks to header documentation\n    * added GET method for application endpoint\n* 0.0.7\n    * Changed PartnerId maximum length to 25\n    * fixed contractId typo to contractNumber\n* 0.0.8\n    * Re-added documentation about Security Nonce header\n* 0.0.9\n    * Changed status codes for POST actions to 201\n* 0.1.0\n    * Address for lessor is optional\n    * Address for lessee is optional\n* 0.1.1\n    * P.O. Box can be provided for lessor's address\n"
   contact:
     email: admin@plusforta.de
-#  license:
-#    name: Apache 2.0
-#    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-tags:
-  - name: application
-    description: Submit or update an application
-  - name: cancel
-    description: Submit the cancellation of an existing rental deposit guarantee
+  version: 0.1.1
 servers:
-  - url: 'https://stage.aareal-aval.de/api/erp'
-    description: Staging Environment usually mirrors Production, except when we are about to launch (then it's the next version)
-  - url: 'https://dev.aareal-aval.de/api/erp'
-    description: Developer Environment (has the latest code, may be broken)
-  - url: 'https://aareal-aval.de/api/erp'
-    description: Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )
+  -
+    url: 'https://stage.aareal-aval.de/api/erp'
+    description: 'Staging Environment usually mirrors Production, except when we are about to launch (then it''s the next version)'
+  -
+    url: 'https://dev.aareal-aval.de/api/erp'
+    description: 'Developer Environment (has the latest code, may be broken)'
+  -
+    url: 'https://aareal-aval.de/api/erp'
+    description: 'Production Environment (the real deal.  If you submit applications here, you will be paying for them.  :) )'
 paths:
   /application:
     get:
       tags:
         - application
-      security:
-        - ApiKeyAuth: []
-      summary: Retrieves an application
+      summary: 'Retrieves an application'
+      description: "Retrieves an application\n"
       operationId: getApplication
-      description: |
-        Retrieves an application
+      parameters:
+        -
+          name: orderId
+          in: query
+          description: 'The plusForta generated order ID'
+          required: false
+          schema:
+            type: string
+          example: '3034033'
+        -
+          name: customId
+          in: query
+          required: false
+          schema:
+            type: string
+          example: ACS3443-342
       responses:
         '200':
-          description: application returned
+          description: 'application returned'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Application'
+                allOf:
+                  -
+                    required:
+                      - partnerId
+                      - lessee
+                      - lessor
+                      - apartment
+                      - bankAccount
+                    properties:
+                      callbackUrl:
+                        maxLength: 255
+                        type: string
+                        description: 'URL to call upon contract creation'
+                        format: uri
+                        example: 'https://server.name/path'
+                      partnerId:
+                        maxLength: 25
+                        type: string
+                        description: 'predefined partner ID (maps to EPP ID)'
+                        example: xxx-3432-dasdf
+                      customId:
+                        maxLength: 255
+                        type: string
+                        description: 'Customer defined ID number for end to end tracking'
+                        nullable: true
+                        example: DJF-KDF-KDL-KER
+                      lessee:
+                        maxItems: 2
+                        type: array
+                        items:
+                          required:
+                            - firstName
+                            - lastName
+                            - email
+                          type: object
+                          properties:
+                            gender:
+                              maxLength: 1
+                              enum:
+                                - m
+                                - f
+                              type: string
+                            firstName:
+                              maxLength: 255
+                              type: string
+                              example: Max
+                            lastName:
+                              maxLength: 255
+                              type: string
+                              example: Mustermann
+                            birthdate:
+                              maxLength: 10
+                              type: string
+                              format: date
+                              example: '1984-05-01'
+                            email:
+                              maxLength: 255
+                              type: string
+                              format: email
+                              example: max.mustermann@example.com
+                            phone:
+                              maxLength: 255
+                              type: string
+                              description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
+                              format: phonenumber
+                              example: '030 1234567'
+                            nationality:
+                              maxLength: 2
+                              type: string
+                              format: '2 Digit ISO Country Code'
+                              example: DE
+                            address:
+                              title: 'Postal Address'
+                              required:
+                                - street
+                                - houseNum
+                                - zip
+                                - city
+                              type: object
+                              properties:
+                                street:
+                                  maxLength: 255
+                                  type: string
+                                  example: Gaudystraße
+                                houseNum:
+                                  maxLength: 255
+                                  type: string
+                                  example: 26A
+                                zip:
+                                  maxLength: 16
+                                  type: string
+                                  example: 10439
+                                city:
+                                  maxLength: 255
+                                  type: string
+                                  example: Berlin
+                        description: 'Information about the person (or persons) renting the apartment'
+                      lessor:
+                        type: object
+                        oneOf:
+                          -
+                            title: 'Company with address (postal or P.O. Box)'
+                            required:
+                              - company
+                            type: object
+                            properties:
+                              company:
+                                required:
+                                  - name
+                                type: object
+                                properties:
+                                  name:
+                                    allOf:
+                                      -
+                                        nullable: true
+                                      -
+                                        maxLength: 255
+                                        type: string
+                                        example: 'Scrooge McDuck Rental'
+                                  name2:
+                                    allOf:
+                                      -
+                                        nullable: true
+                                      -
+                                        maxLength: 255
+                                        type: string
+                                        example: 'Berlin Office'
+                                description: 'Landlord company name (if this object is present, lessor.person is ignored)'
+                                nullable: true
+                              address:
+                                type: object
+                                oneOf:
+                                  -
+                                    title: 'Postal Address'
+                                    required:
+                                      - street
+                                      - houseNum
+                                      - zip
+                                      - city
+                                    type: object
+                                    properties:
+                                      street:
+                                        maxLength: 255
+                                        type: string
+                                        example: Gaudystraße
+                                      houseNum:
+                                        maxLength: 255
+                                        type: string
+                                        example: 26A
+                                      zip:
+                                        maxLength: 16
+                                        type: string
+                                        example: 10439
+                                      city:
+                                        maxLength: 255
+                                        type: string
+                                        example: Berlin
+                                  -
+                                    title: 'P.O. Box'
+                                    required:
+                                      - pobox
+                                      - zip
+                                      - city
+                                    type: object
+                                    properties:
+                                      pobox:
+                                        maxLength: 8
+                                        type: string
+                                        example: '12345678'
+                                      zip:
+                                        maxLength: 16
+                                        type: string
+                                        example: 10439
+                                      city:
+                                        maxLength: 255
+                                        type: string
+                                        example: Berlin
+                                    example:
+                                      pobox: 12345678
+                                      zip: 10439
+                                      city: Berlin
+                                description: 'Either P.O. Box or postal address has to be given'
+                          -
+                            title: 'Person with postal address'
+                            required:
+                              - person
+                            type: object
+                            properties:
+                              person:
+                                required:
+                                  - firstName
+                                  - lastName
+                                  - gender
+                                type: object
+                                properties:
+                                  gender:
+                                    maxLength: 1
+                                    enum:
+                                      - m
+                                      - f
+                                    type: string
+                                  firstName:
+                                    allOf:
+                                      -
+                                        nullable: true
+                                      -
+                                        maxLength: 255
+                                        type: string
+                                        example: Max
+                                  lastName:
+                                    allOf:
+                                      -
+                                        nullable: true
+                                      -
+                                        maxLength: 255
+                                        type: string
+                                        example: Mustermann
+                                description: Landlord
+                                nullable: true
+                              address:
+                                title: 'Postal Address'
+                                required:
+                                  - street
+                                  - houseNum
+                                  - zip
+                                  - city
+                                type: object
+                                properties:
+                                  street:
+                                    maxLength: 255
+                                    type: string
+                                    example: Gaudystraße
+                                  houseNum:
+                                    maxLength: 255
+                                    type: string
+                                    example: 26A
+                                  zip:
+                                    maxLength: 16
+                                    type: string
+                                    example: 10439
+                                  city:
+                                    maxLength: 255
+                                    type: string
+                                    example: Berlin
+                        description: "Landlord information\n"
+                        example:
+                          company:
+                            name: 'plusForta GmbH'
+                          address:
+                            pobox: 12345678
+                            zip: 10439
+                            city: Berlin
+                      apartment:
+                        required:
+                          - deposit
+                          - address
+                          - contractDates
+                        type: object
+                        properties:
+                          depositPaid:
+                            type: boolean
+                            description: 'Set to true if Deposit has already been paid, assumed to be false if not present'
+                          monthlyRent:
+                            type: number
+                            description: 'Monthly cold rent'
+                            format: float
+                            example: !!float 500
+                          deposit:
+                            type: number
+                            description: 'Deposit Amount'
+                            format: float
+                            example: !!float 1500
+                          contractDates:
+                            required:
+                              - start
+                            type: object
+                            properties:
+                              start:
+                                allOf:
+                                  -
+                                    maxLength: 10
+                                    type: string
+                                    format: date
+                                    example: '1984-05-01'
+                                description: 'Start of the rental contract in the format: YYYY-MM-DD'
+                                example: '2019-02-01'
+                              end:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 10
+                                    type: string
+                                    format: date
+                                    example: '1984-05-01'
+                                description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
+                                example: '2020-02-01'
+                              signed:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 10
+                                    type: string
+                                    format: date
+                                    example: '1984-05-01'
+                                description: 'Date contract was signed in the format: YYYY-MM-DD'
+                                example: '2019-01-15'
+                          address:
+                            allOf:
+                              -
+                                title: 'Postal Address'
+                                required:
+                                  - street
+                                  - houseNum
+                                  - zip
+                                  - city
+                                type: object
+                                properties:
+                                  street:
+                                    maxLength: 255
+                                    type: string
+                                    example: Gaudystraße
+                                  houseNum:
+                                    maxLength: 255
+                                    type: string
+                                    example: 26A
+                                  zip:
+                                    maxLength: 16
+                                    type: string
+                                    example: 10439
+                                  city:
+                                    maxLength: 255
+                                    type: string
+                                    example: Berlin
+                            description: 'Address of the rental properity'
+                      bankAccount:
+                        required:
+                          - owner
+                          - iban
+                        type: object
+                        properties:
+                          owner:
+                            type: string
+                            description: 'Account owner'
+                            example: 'Max Mustermann'
+                          bankName:
+                            type: string
+                            description: 'Name of the bank if available'
+                            example: DKB
+                          iban:
+                            type: string
+                            format: iban
+                            example: DE12500105170648489890
+                          paymentFrequency:
+                            enum:
+                              - monthly
+                              - semi-annually
+                              - quarterly
+                              - yearly
+                            type: string
+                  -
+                    properties:
+                      status:
+                        enum:
+                          - pending
+                          - accepted
+                          - declined
+                          - submitted
+                          - bounced
+                          - cancelled
+                        type: string
+                        readOnly: true
+                      contractNumber:
+                        type: string
+                        description: 'R+V supplied BürgschaftsNr'
+                        nullable: true
         '400':
-          description: validation failure
+          description: 'validation failure'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationErrorResponse'
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        errorType:
+                          type: string
+                          example: Validation
+                        errorList:
+                          type: object
+                          properties:
+                            apartment.address.street:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  code:
+                                    type: string
+                                    example: REQFLD
+                                  message:
+                                    type: string
+                                    example: 'Required Field lessee.address.street missing'
+                          description: "a list of fields with an array of errors.\n"
         '401':
-          description: credentials for auth missing
+          description: 'credentials for auth missing'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Unauthorized'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOAUTH
+                  message:
+                    type: string
+                    example: 'Credentials for auth missing'
         '404':
           description: 'No matching application found.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOTFOUND
+                  message:
+                    type: string
+                    example: 'Object not found'
         '500':
           description: 'Internal Processing Error'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-      parameters:
-        - name: orderId
-          required: false
-          example: '3034033'
-          schema:
-            type: string
-          description: 'The plusForta generated order ID'
-          in: query
-        - name: customId
-          required: false
-          example: 'ACS3443-342'
-          schema:
-            type: string
-          in: query
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: UNKNOWN
+                  message:
+                    type: string
+                    example: 'Unknown error'
+      security:
+        -
+          ApiKeyAuth: {  }
     post:
       tags:
         - application
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: header
-          name: securitynonce
-          schema:
-            type: string
-            maxLength: 255
-          required: false
-          description: Optional nonce to be returned in callbacks.
-      summary: creates an application
+      summary: 'creates an application'
+      description: "Creates an application\n"
       operationId: createApplication
-      description: |
-        Creates an application
+      parameters:
+        -
+          name: securitynonce
+          in: header
+          description: 'Optional nonce to be returned in callbacks.'
+          required: false
+          schema:
+            maxLength: 255
+            type: string
+      requestBody:
+        description: 'data for creating an Application'
+        content:
+          application/json:
+            schema:
+              title: Application
+              allOf:
+                -
+                  required:
+                    - partnerId
+                    - lessee
+                    - lessor
+                    - apartment
+                    - bankAccount
+                  properties:
+                    callbackUrl:
+                      maxLength: 255
+                      type: string
+                      description: 'URL to call upon contract creation'
+                      format: uri
+                      example: 'https://server.name/path'
+                    partnerId:
+                      maxLength: 25
+                      type: string
+                      description: 'predefined partner ID (maps to EPP ID)'
+                      example: xxx-3432-dasdf
+                    customId:
+                      maxLength: 255
+                      type: string
+                      description: 'Customer defined ID number for end to end tracking'
+                      nullable: true
+                      example: DJF-KDF-KDL-KER
+                    lessee:
+                      maxItems: 2
+                      type: array
+                      items:
+                        required:
+                          - firstName
+                          - lastName
+                          - email
+                        type: object
+                        properties:
+                          gender:
+                            maxLength: 1
+                            enum:
+                              - m
+                              - f
+                            type: string
+                          firstName:
+                            maxLength: 255
+                            type: string
+                            example: Max
+                          lastName:
+                            maxLength: 255
+                            type: string
+                            example: Mustermann
+                          birthdate:
+                            maxLength: 10
+                            type: string
+                            format: date
+                            example: '1984-05-01'
+                          email:
+                            maxLength: 255
+                            type: string
+                            format: email
+                            example: max.mustermann@example.com
+                          phone:
+                            maxLength: 255
+                            type: string
+                            description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
+                            format: phonenumber
+                            example: '030 1234567'
+                          nationality:
+                            maxLength: 2
+                            type: string
+                            format: '2 Digit ISO Country Code'
+                            example: DE
+                          address:
+                            title: 'Postal Address'
+                            required:
+                              - street
+                              - houseNum
+                              - zip
+                              - city
+                            type: object
+                            properties:
+                              street:
+                                maxLength: 255
+                                type: string
+                                example: Gaudystraße
+                              houseNum:
+                                maxLength: 255
+                                type: string
+                                example: 26A
+                              zip:
+                                maxLength: 16
+                                type: string
+                                example: 10439
+                              city:
+                                maxLength: 255
+                                type: string
+                                example: Berlin
+                      description: 'Information about the person (or persons) renting the apartment'
+                    lessor:
+                      type: object
+                      oneOf:
+                        -
+                          title: 'Company with address (postal or P.O. Box)'
+                          required:
+                            - company
+                          type: object
+                          properties:
+                            company:
+                              required:
+                                - name
+                              type: object
+                              properties:
+                                name:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: 'Scrooge McDuck Rental'
+                                name2:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: 'Berlin Office'
+                              description: 'Landlord company name (if this object is present, lessor.person is ignored)'
+                              nullable: true
+                            address:
+                              type: object
+                              oneOf:
+                                -
+                                  title: 'Postal Address'
+                                  required:
+                                    - street
+                                    - houseNum
+                                    - zip
+                                    - city
+                                  type: object
+                                  properties:
+                                    street:
+                                      maxLength: 255
+                                      type: string
+                                      example: Gaudystraße
+                                    houseNum:
+                                      maxLength: 255
+                                      type: string
+                                      example: 26A
+                                    zip:
+                                      maxLength: 16
+                                      type: string
+                                      example: 10439
+                                    city:
+                                      maxLength: 255
+                                      type: string
+                                      example: Berlin
+                                -
+                                  title: 'P.O. Box'
+                                  required:
+                                    - pobox
+                                    - zip
+                                    - city
+                                  type: object
+                                  properties:
+                                    pobox:
+                                      maxLength: 8
+                                      type: string
+                                      example: '12345678'
+                                    zip:
+                                      maxLength: 16
+                                      type: string
+                                      example: 10439
+                                    city:
+                                      maxLength: 255
+                                      type: string
+                                      example: Berlin
+                                  example:
+                                    pobox: 12345678
+                                    zip: 10439
+                                    city: Berlin
+                              description: 'Either P.O. Box or postal address has to be given'
+                        -
+                          title: 'Person with postal address'
+                          required:
+                            - person
+                          type: object
+                          properties:
+                            person:
+                              required:
+                                - firstName
+                                - lastName
+                                - gender
+                              type: object
+                              properties:
+                                gender:
+                                  maxLength: 1
+                                  enum:
+                                    - m
+                                    - f
+                                  type: string
+                                firstName:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: Max
+                                lastName:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: Mustermann
+                              description: Landlord
+                              nullable: true
+                            address:
+                              title: 'Postal Address'
+                              required:
+                                - street
+                                - houseNum
+                                - zip
+                                - city
+                              type: object
+                              properties:
+                                street:
+                                  maxLength: 255
+                                  type: string
+                                  example: Gaudystraße
+                                houseNum:
+                                  maxLength: 255
+                                  type: string
+                                  example: 26A
+                                zip:
+                                  maxLength: 16
+                                  type: string
+                                  example: 10439
+                                city:
+                                  maxLength: 255
+                                  type: string
+                                  example: Berlin
+                      description: "Landlord information\n"
+                      example:
+                        company:
+                          name: 'plusForta GmbH'
+                        address:
+                          pobox: 12345678
+                          zip: 10439
+                          city: Berlin
+                    apartment:
+                      required:
+                        - deposit
+                        - address
+                        - contractDates
+                      type: object
+                      properties:
+                        depositPaid:
+                          type: boolean
+                          description: 'Set to true if Deposit has already been paid, assumed to be false if not present'
+                        monthlyRent:
+                          type: number
+                          description: 'Monthly cold rent'
+                          format: float
+                          example: !!float 500
+                        deposit:
+                          type: number
+                          description: 'Deposit Amount'
+                          format: float
+                          example: !!float 1500
+                        contractDates:
+                          required:
+                            - start
+                          type: object
+                          properties:
+                            start:
+                              allOf:
+                                -
+                                  maxLength: 10
+                                  type: string
+                                  format: date
+                                  example: '1984-05-01'
+                              description: 'Start of the rental contract in the format: YYYY-MM-DD'
+                              example: '2019-02-01'
+                            end:
+                              allOf:
+                                -
+                                  nullable: true
+                                -
+                                  maxLength: 10
+                                  type: string
+                                  format: date
+                                  example: '1984-05-01'
+                              description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
+                              example: '2020-02-01'
+                            signed:
+                              allOf:
+                                -
+                                  nullable: true
+                                -
+                                  maxLength: 10
+                                  type: string
+                                  format: date
+                                  example: '1984-05-01'
+                              description: 'Date contract was signed in the format: YYYY-MM-DD'
+                              example: '2019-01-15'
+                        address:
+                          allOf:
+                            -
+                              title: 'Postal Address'
+                              required:
+                                - street
+                                - houseNum
+                                - zip
+                                - city
+                              type: object
+                              properties:
+                                street:
+                                  maxLength: 255
+                                  type: string
+                                  example: Gaudystraße
+                                houseNum:
+                                  maxLength: 255
+                                  type: string
+                                  example: 26A
+                                zip:
+                                  maxLength: 16
+                                  type: string
+                                  example: 10439
+                                city:
+                                  maxLength: 255
+                                  type: string
+                                  example: Berlin
+                          description: 'Address of the rental properity'
+                    bankAccount:
+                      required:
+                        - owner
+                        - iban
+                      type: object
+                      properties:
+                        owner:
+                          type: string
+                          description: 'Account owner'
+                          example: 'Max Mustermann'
+                        bankName:
+                          type: string
+                          description: 'Name of the bank if available'
+                          example: DKB
+                        iban:
+                          type: string
+                          format: iban
+                          example: DE12500105170648489890
+                        paymentFrequency:
+                          enum:
+                            - monthly
+                            - semi-annually
+                            - quarterly
+                            - yearly
+                          type: string
+        required: true
       responses:
         '201':
-          description: application created
+          description: 'application created'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationResponse'
+                required:
+                  - orderId
+                properties:
+                  customId:
+                    maxLength: 255
+                    type: string
+                    description: 'Customer defined ID number for end to end tracking'
+                    nullable: true
+                    example: DJF-KDF-KDL-KER
+                  orderId:
+                    type: number
+                    description: 'plusForta order ID'
+                    example: '102343'
+                  contractNumber:
+                    allOf:
+                      -
+                        nullable: true
+                      -
+                        type: string
+                        description: 'R+V supplied BürgschaftsNr'
+                        nullable: true
         '400':
-          description: validation failure
+          description: 'validation failure'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationErrorResponse'
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        errorType:
+                          type: string
+                          example: Validation
+                        errorList:
+                          type: object
+                          properties:
+                            apartment.address.street:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  code:
+                                    type: string
+                                    example: REQFLD
+                                  message:
+                                    type: string
+                                    example: 'Required Field lessee.address.street missing'
+                          description: "a list of fields with an array of errors.\n"
         '401':
-          description: credentials for auth missing
+          description: 'credentials for auth missing'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Unauthorized'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOAUTH
+                  message:
+                    type: string
+                    example: 'Credentials for auth missing'
+        '403':
+          description: 'request denied'
+          content:
+            application/json:
+              schema:
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BLOCKED
+                  message:
+                    type: string
+                    example: 'Requested action is not possible'
         '500':
           description: 'Internal Processing Error'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Application'
-        description: data for creating an Application
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: UNKNOWN
+                  message:
+                    type: string
+                    example: 'Unknown error'
       callbacks:
         applicationSubmitted:
           '{$request.body#/callbackUrl}':
             post:
               requestBody:
-                required: true
                 content:
                   application/json:
                     schema:
-                      $ref: '#/components/schemas/CallbackSubmit'
+                      allOf:
+                        -
+                          required:
+                            - type
+                            - orderId
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            customId:
+                              maxLength: 255
+                              type: string
+                              description: 'Customer defined ID number for end to end tracking'
+                              nullable: true
+                              example: DJF-KDF-KDL-KER
+                            orderId:
+                              type: number
+                              description: 'plusForta order ID'
+                              example: '102343'
+                            contractNumber:
+                              type: string
+                              description: 'R+V supplied BürgschaftsNr'
+                              nullable: true
+                            securityNonce:
+                              maxLength: 255
+                              type: string
+                              description: 'Optionally returned nonce (if provided in initial POST/PATCH)'
+                        -
+                          required:
+                            - type
+                          type: object
+                          properties:
+                            type:
+                              enum:
+                                - submitted
+                              example: submitted
+                required: true
               responses:
                 '204':
-                  description: |
-                    Everything is great!  Use this error code to let us know you have received the message
+                  description: "Everything is great!  Use this error code to let us know you have received the message\n"
                 '400':
-                  description: |
-                    Everything is bad! Use this error code to let us know you can't handle the news right now
-                    and we should try again later.
+                  description: "Everything is bad! Use this error code to let us know you can't handle the news right now\nand we should try again later.\n"
         applicationProcessed:
           '{$request.body#/callbackUrl}':
             post:
               requestBody:
-                required: true
                 content:
                   application/json:
                     schema:
-                      $ref: '#/components/schemas/CallbackProcessed'
+                      allOf:
+                        -
+                          required:
+                            - type
+                            - orderId
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            customId:
+                              maxLength: 255
+                              type: string
+                              description: 'Customer defined ID number for end to end tracking'
+                              nullable: true
+                              example: DJF-KDF-KDL-KER
+                            orderId:
+                              type: number
+                              description: 'plusForta order ID'
+                              example: '102343'
+                            contractNumber:
+                              type: string
+                              description: 'R+V supplied BürgschaftsNr'
+                              nullable: true
+                            securityNonce:
+                              maxLength: 255
+                              type: string
+                              description: 'Optionally returned nonce (if provided in initial POST/PATCH)'
+                        -
+                          required:
+                            - contractNumber
+                            - contractStatus
+                          type: object
+                          properties:
+                            type:
+                              enum:
+                                - processed
+                              example: processed
+                            contractNumber:
+                              allOf:
+                                -
+                                  nullable: false
+                                -
+                                  type: string
+                                  description: 'R+V supplied BürgschaftsNr'
+                                  nullable: true
+                            contractStatus:
+                              enum:
+                                - accepted
+                                - declined
+                              type: string
+                              description: 'Insurance provider response to application'
+                      description: 'Generated when an application has a decision from the insurance provider'
+                required: true
               responses:
                 '204':
-                  description: |
-                    Everything is great!  Use this error code to let us know you have received the message
+                  description: "Everything is great!  Use this error code to let us know you have received the message\n"
                 '400':
-                  description: |
-                    Everything is bad! Use this error code to let us know you can't handle the news right now
-                    and we should try again later.
+                  description: "Everything is bad! Use this error code to let us know you can't handle the news right now\nand we should try again later.\n"
         emailBounced:
           '{$request.body#/callbackUrl}':
             post:
               requestBody:
-                required: true
                 content:
                   application/json:
                     schema:
-                      $ref: '#/components/schemas/CallbackBounce'
+                      allOf:
+                        -
+                          required:
+                            - type
+                            - orderId
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            customId:
+                              maxLength: 255
+                              type: string
+                              description: 'Customer defined ID number for end to end tracking'
+                              nullable: true
+                              example: DJF-KDF-KDL-KER
+                            orderId:
+                              type: number
+                              description: 'plusForta order ID'
+                              example: '102343'
+                            contractNumber:
+                              type: string
+                              description: 'R+V supplied BürgschaftsNr'
+                              nullable: true
+                            securityNonce:
+                              maxLength: 255
+                              type: string
+                              description: 'Optionally returned nonce (if provided in initial POST/PATCH)'
+                        -
+                          type: object
+                          properties:
+                            type:
+                              enum:
+                                - bounced
+                              example: bounced
+                required: true
               responses:
                 '204':
-                  description: |
-                    Everything is great!  Use this error code to let us know you have received the message
+                  description: "Everything is great!  Use this error code to let us know you have received the message\n"
                 '400':
-                  description: |
-                    Everything is bad! Use this error code to let us know you can't handle the news right now
-                    and we should try again later.
+                  description: "Everything is bad! Use this error code to let us know you can't handle the news right now\nand we should try again later.\n"
+      security:
+        -
+          ApiKeyAuth: {  }
     patch:
       tags:
         - application
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: header
-          name: securitynonce
-          schema:
-            type: string
-            maxLength: 255
-          required: false
-          description: Optional nonce to be returned in callbacks.
-      summary: updates an application
+      summary: 'updates an application'
+      description: "Updates an existing application, also causes a new email to be sent to the customer.  Only possible before the customer has submitted the application.\n"
       operationId: updateApplication
-      description: |
-        Updates an existing application, also causes a new email to be sent to the customer.  Only possible before the customer has submitted the application.
+      parameters:
+        -
+          name: securitynonce
+          in: header
+          description: 'Optional nonce to be returned in callbacks.'
+          required: false
+          schema:
+            maxLength: 255
+            type: string
+      requestBody:
+        description: 'Application Data'
+        content:
+          application/json:
+            schema:
+              allOf:
+                -
+                  required:
+                    - orderId
+                  type: object
+                  properties:
+                    orderId:
+                      type: number
+                      description: 'plusForta order ID'
+                      example: '102343'
+                -
+                  required:
+                    - partnerId
+                    - lessee
+                    - lessor
+                    - apartment
+                    - bankAccount
+                  properties:
+                    callbackUrl:
+                      maxLength: 255
+                      type: string
+                      description: 'URL to call upon contract creation'
+                      format: uri
+                      example: 'https://server.name/path'
+                    partnerId:
+                      maxLength: 25
+                      type: string
+                      description: 'predefined partner ID (maps to EPP ID)'
+                      example: xxx-3432-dasdf
+                    customId:
+                      maxLength: 255
+                      type: string
+                      description: 'Customer defined ID number for end to end tracking'
+                      nullable: true
+                      example: DJF-KDF-KDL-KER
+                    lessee:
+                      maxItems: 2
+                      type: array
+                      items:
+                        required:
+                          - firstName
+                          - lastName
+                          - email
+                        type: object
+                        properties:
+                          gender:
+                            maxLength: 1
+                            enum:
+                              - m
+                              - f
+                            type: string
+                          firstName:
+                            maxLength: 255
+                            type: string
+                            example: Max
+                          lastName:
+                            maxLength: 255
+                            type: string
+                            example: Mustermann
+                          birthdate:
+                            maxLength: 10
+                            type: string
+                            format: date
+                            example: '1984-05-01'
+                          email:
+                            maxLength: 255
+                            type: string
+                            format: email
+                            example: max.mustermann@example.com
+                          phone:
+                            maxLength: 255
+                            type: string
+                            description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
+                            format: phonenumber
+                            example: '030 1234567'
+                          nationality:
+                            maxLength: 2
+                            type: string
+                            format: '2 Digit ISO Country Code'
+                            example: DE
+                          address:
+                            title: 'Postal Address'
+                            required:
+                              - street
+                              - houseNum
+                              - zip
+                              - city
+                            type: object
+                            properties:
+                              street:
+                                maxLength: 255
+                                type: string
+                                example: Gaudystraße
+                              houseNum:
+                                maxLength: 255
+                                type: string
+                                example: 26A
+                              zip:
+                                maxLength: 16
+                                type: string
+                                example: 10439
+                              city:
+                                maxLength: 255
+                                type: string
+                                example: Berlin
+                      description: 'Information about the person (or persons) renting the apartment'
+                    lessor:
+                      type: object
+                      oneOf:
+                        -
+                          title: 'Company with address (postal or P.O. Box)'
+                          required:
+                            - company
+                          type: object
+                          properties:
+                            company:
+                              required:
+                                - name
+                              type: object
+                              properties:
+                                name:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: 'Scrooge McDuck Rental'
+                                name2:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: 'Berlin Office'
+                              description: 'Landlord company name (if this object is present, lessor.person is ignored)'
+                              nullable: true
+                            address:
+                              type: object
+                              oneOf:
+                                -
+                                  title: 'Postal Address'
+                                  required:
+                                    - street
+                                    - houseNum
+                                    - zip
+                                    - city
+                                  type: object
+                                  properties:
+                                    street:
+                                      maxLength: 255
+                                      type: string
+                                      example: Gaudystraße
+                                    houseNum:
+                                      maxLength: 255
+                                      type: string
+                                      example: 26A
+                                    zip:
+                                      maxLength: 16
+                                      type: string
+                                      example: 10439
+                                    city:
+                                      maxLength: 255
+                                      type: string
+                                      example: Berlin
+                                -
+                                  title: 'P.O. Box'
+                                  required:
+                                    - pobox
+                                    - zip
+                                    - city
+                                  type: object
+                                  properties:
+                                    pobox:
+                                      maxLength: 8
+                                      type: string
+                                      example: '12345678'
+                                    zip:
+                                      maxLength: 16
+                                      type: string
+                                      example: 10439
+                                    city:
+                                      maxLength: 255
+                                      type: string
+                                      example: Berlin
+                                  example:
+                                    pobox: 12345678
+                                    zip: 10439
+                                    city: Berlin
+                              description: 'Either P.O. Box or postal address has to be given'
+                        -
+                          title: 'Person with postal address'
+                          required:
+                            - person
+                          type: object
+                          properties:
+                            person:
+                              required:
+                                - firstName
+                                - lastName
+                                - gender
+                              type: object
+                              properties:
+                                gender:
+                                  maxLength: 1
+                                  enum:
+                                    - m
+                                    - f
+                                  type: string
+                                firstName:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: Max
+                                lastName:
+                                  allOf:
+                                    -
+                                      nullable: true
+                                    -
+                                      maxLength: 255
+                                      type: string
+                                      example: Mustermann
+                              description: Landlord
+                              nullable: true
+                            address:
+                              title: 'Postal Address'
+                              required:
+                                - street
+                                - houseNum
+                                - zip
+                                - city
+                              type: object
+                              properties:
+                                street:
+                                  maxLength: 255
+                                  type: string
+                                  example: Gaudystraße
+                                houseNum:
+                                  maxLength: 255
+                                  type: string
+                                  example: 26A
+                                zip:
+                                  maxLength: 16
+                                  type: string
+                                  example: 10439
+                                city:
+                                  maxLength: 255
+                                  type: string
+                                  example: Berlin
+                      description: "Landlord information\n"
+                      example:
+                        company:
+                          name: 'plusForta GmbH'
+                        address:
+                          pobox: 12345678
+                          zip: 10439
+                          city: Berlin
+                    apartment:
+                      required:
+                        - deposit
+                        - address
+                        - contractDates
+                      type: object
+                      properties:
+                        depositPaid:
+                          type: boolean
+                          description: 'Set to true if Deposit has already been paid, assumed to be false if not present'
+                        monthlyRent:
+                          type: number
+                          description: 'Monthly cold rent'
+                          format: float
+                          example: !!float 500
+                        deposit:
+                          type: number
+                          description: 'Deposit Amount'
+                          format: float
+                          example: !!float 1500
+                        contractDates:
+                          required:
+                            - start
+                          type: object
+                          properties:
+                            start:
+                              allOf:
+                                -
+                                  maxLength: 10
+                                  type: string
+                                  format: date
+                                  example: '1984-05-01'
+                              description: 'Start of the rental contract in the format: YYYY-MM-DD'
+                              example: '2019-02-01'
+                            end:
+                              allOf:
+                                -
+                                  nullable: true
+                                -
+                                  maxLength: 10
+                                  type: string
+                                  format: date
+                                  example: '1984-05-01'
+                              description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
+                              example: '2020-02-01'
+                            signed:
+                              allOf:
+                                -
+                                  nullable: true
+                                -
+                                  maxLength: 10
+                                  type: string
+                                  format: date
+                                  example: '1984-05-01'
+                              description: 'Date contract was signed in the format: YYYY-MM-DD'
+                              example: '2019-01-15'
+                        address:
+                          allOf:
+                            -
+                              title: 'Postal Address'
+                              required:
+                                - street
+                                - houseNum
+                                - zip
+                                - city
+                              type: object
+                              properties:
+                                street:
+                                  maxLength: 255
+                                  type: string
+                                  example: Gaudystraße
+                                houseNum:
+                                  maxLength: 255
+                                  type: string
+                                  example: 26A
+                                zip:
+                                  maxLength: 16
+                                  type: string
+                                  example: 10439
+                                city:
+                                  maxLength: 255
+                                  type: string
+                                  example: Berlin
+                          description: 'Address of the rental properity'
+                    bankAccount:
+                      required:
+                        - owner
+                        - iban
+                      type: object
+                      properties:
+                        owner:
+                          type: string
+                          description: 'Account owner'
+                          example: 'Max Mustermann'
+                        bankName:
+                          type: string
+                          description: 'Name of the bank if available'
+                          example: DKB
+                        iban:
+                          type: string
+                          format: iban
+                          example: DE12500105170648489890
+                        paymentFrequency:
+                          enum:
+                            - monthly
+                            - semi-annually
+                            - quarterly
+                            - yearly
+                          type: string
+        required: true
       responses:
         '200':
-          description: application updated
+          description: 'application updated'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationResponse'
+                required:
+                  - orderId
+                properties:
+                  customId:
+                    maxLength: 255
+                    type: string
+                    description: 'Customer defined ID number for end to end tracking'
+                    nullable: true
+                    example: DJF-KDF-KDL-KER
+                  orderId:
+                    type: number
+                    description: 'plusForta order ID'
+                    example: '102343'
+                  contractNumber:
+                    allOf:
+                      -
+                        nullable: true
+                      -
+                        type: string
+                        description: 'R+V supplied BürgschaftsNr'
+                        nullable: true
         '400':
-          description: validation failure
+          description: 'validation failure'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationErrorResponse'
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        errorType:
+                          type: string
+                          example: Validation
+                        errorList:
+                          type: object
+                          properties:
+                            apartment.address.street:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  code:
+                                    type: string
+                                    example: REQFLD
+                                  message:
+                                    type: string
+                                    example: 'Required Field lessee.address.street missing'
+                          description: "a list of fields with an array of errors.\n"
         '401':
-          description: credentials for auth missing
+          description: 'credentials for auth missing'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Unauthorized'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOAUTH
+                  message:
+                    type: string
+                    example: 'Credentials for auth missing'
         '403':
-          description: request denied
+          description: 'request denied'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Denied'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: BLOCKED
+                  message:
+                    type: string
+                    example: 'Requested action is not possible'
         '404':
           description: 'No matching application found.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOTFOUND
+                  message:
+                    type: string
+                    example: 'Object not found'
         '500':
           description: 'Internal Processing Error'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationUpdate'
-        description: Application Data
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: UNKNOWN
+                  message:
+                    type: string
+                    example: 'Unknown error'
       callbacks:
         createContract:
           '{$request.body#/callbackUrl}':
             post:
               requestBody:
-                required: true
                 content:
                   application/json:
                     schema:
-                      $ref: '#/components/schemas/CallbackProcessed'
+                      allOf:
+                        -
+                          required:
+                            - type
+                            - orderId
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            customId:
+                              maxLength: 255
+                              type: string
+                              description: 'Customer defined ID number for end to end tracking'
+                              nullable: true
+                              example: DJF-KDF-KDL-KER
+                            orderId:
+                              type: number
+                              description: 'plusForta order ID'
+                              example: '102343'
+                            contractNumber:
+                              type: string
+                              description: 'R+V supplied BürgschaftsNr'
+                              nullable: true
+                            securityNonce:
+                              maxLength: 255
+                              type: string
+                              description: 'Optionally returned nonce (if provided in initial POST/PATCH)'
+                        -
+                          required:
+                            - contractNumber
+                            - contractStatus
+                          type: object
+                          properties:
+                            type:
+                              enum:
+                                - processed
+                              example: processed
+                            contractNumber:
+                              allOf:
+                                -
+                                  nullable: false
+                                -
+                                  type: string
+                                  description: 'R+V supplied BürgschaftsNr'
+                                  nullable: true
+                            contractStatus:
+                              enum:
+                                - accepted
+                                - declined
+                              type: string
+                              description: 'Insurance provider response to application'
+                      description: 'Generated when an application has a decision from the insurance provider'
+                required: true
               responses:
                 '200':
-                  description: |
-                    Everything is great!  Use this error code to let us know you have received the message
+                  description: "Everything is great!  Use this error code to let us know you have received the message\n"
                 '400':
-                  description: |
-                    Everything is bad! Use this error code to let us know you can't handle the news right now
-                    and we should try again later.
+                  description: "Everything is bad! Use this error code to let us know you can't handle the news right now\nand we should try again later.\n"
+      security:
+        -
+          ApiKeyAuth: {  }
   /cancel:
     post:
       tags:
         - cancel
-      security:
-        - ApiKeyAuth: []
-      summary: cancels an existing application
+      summary: 'cancels an existing application'
+      description: "Cancels an existing rental deposit guarantee\n"
       operationId: releaseObligation
-      description: |
-        Cancels an existing rental deposit guarantee
+      requestBody:
+        description: 'data for cancelling an existing contract, must pass one of the following IDs: customId, contractNumber, or orderId'
+        content:
+          application/json:
+            schema:
+              title: Cancellation
+              allOf:
+                -
+                  properties:
+                    customId:
+                      maxLength: 255
+                      type: string
+                      description: 'Customer defined ID number for end to end tracking'
+                      nullable: true
+                      example: DJF-KDF-KDL-KER
+                    orderId:
+                      type: number
+                      description: 'plusForta order ID'
+                      example: '102343'
+                    contractNumber:
+                      type: string
+                      description: 'R+V supplied BürgschaftsNr'
+                      nullable: true
+                    effectiveDate:
+                      allOf:
+                        -
+                          maxLength: 10
+                          type: string
+                          format: date
+                          example: '1984-05-01'
+                      description: 'The future date the coverage should be ended.  If blank, effective immediately.'
+                  description: 'Requires one of customId, contractNumber, or orderId'
+        required: true
       responses:
         '202':
-          description: obligation released
+          description: 'obligation released'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CancelResponse'
+                required:
+                  - orderId
+                properties:
+                  customId:
+                    maxLength: 255
+                    type: string
+                    description: 'Customer defined ID number for end to end tracking'
+                    nullable: true
+                    example: DJF-KDF-KDL-KER
+                  orderId:
+                    type: number
+                    description: 'plusForta order ID'
+                    example: '102343'
+                  contractNumber:
+                    allOf:
+                      -
+                        nullable: true
+                      -
+                        type: string
+                        description: 'R+V supplied BürgschaftsNr'
+                        nullable: true
         '400':
-          description: validation failure
+          description: 'validation failure'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationErrorResponse'
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        errorType:
+                          type: string
+                          example: Validation
+                        errorList:
+                          type: object
+                          properties:
+                            apartment.address.street:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  code:
+                                    type: string
+                                    example: REQFLD
+                                  message:
+                                    type: string
+                                    example: 'Required Field lessee.address.street missing'
+                          description: "a list of fields with an array of errors.\n"
         '401':
-          description: credentials for auth missing
+          description: 'credentials for auth missing'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Unauthorized'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOAUTH
+                  message:
+                    type: string
+                    example: 'Credentials for auth missing'
         '404':
-          description: 'No matching contract found.'
+          description: 'No matching application found.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                required:
+                  - code
+                  - message
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOTFOUND
+                  message:
+                    type: string
+                    example: 'Object not found'
         '500':
           description: 'Internal Processing Error'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Cancel'
-        description: 'data for cancelling an existing contract, must pass one of the following IDs: customId, contractNumber, or orderId'
-components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-Apikey
-  schemas:
-    CallbackProcessed:
-      description: Generated when an application has a decision from the insurance provider
-      type: object
-      properties:
-        type:
-          type: string
-          example: 'processed'
-          enum:
-            - 'processed'
-        customId:
-          type: string
-          description: Customer supplied ID number
-          example: "34234343XRA"
-        orderId:
-          type: number
-          description: plusForta order ID
-          example: '102343'
-        contractNumber:
-          type: string
-          description: R+V supplied BürgschaftsNr
-        contractStatus:
-          type: string
-          enum:
-            - accepted
-            - declined
-          description: Insurance provider response to application
-        contractStatusReason:
-          description: Reason for decline
-        securityNonce:
-          type: string
-          maxLength: 255
-          description: Optionally returned nonce (if provided in initial POST/PATCH)
-      required:
-        - orderId
-        - contractNumber
-        - contractStatus
-        - contractStatusReason
-    CallbackSubmit:
-      type: object
-      properties:
-        type:
-          type: string
-          example: 'submitted'
-          enum:
-            - 'submitted'
-        customId:
-          type: string
-          description: Customer supplied ID number
-          example: "34234343XRA"
-        orderId:
-          type: number
-          description: plusForta order ID
-          example: '102343'
-        securityNonce:
-          type: string
-          maxLength: 255
-          description: Optionally returned nonce (if provided in initial POST/PATCH)
-      required:
-        - orderId
-        - type
-    CallbackBounce:
-      type: object
-      properties:
-        type:
-          type: string
-          example: 'bounced'
-          enum:
-            - 'bounced'
-        customId:
-          type: string
-          description: Customer supplied ID number
-        orderId:
-          type: number
-          description: plusForta order ID
-          example: '102343'
-        securityNonce:
-          type: string
-          maxLength: 255
-          description: Optionally returned nonce (if provided in initial POST/PATCH)
-      required:
-        - orderId
-        - contractStatus
-        - contractStatusReason
-    Application:
-      required:
-        - partnerId
-        - lessee
-        - lessor
-        - apartment
-        - bankAccount
-      properties:
-        status:
-          type: string
-          readOnly: true
-          enum:
-            - pending
-            - accepted
-            - declined
-            - submitted
-            - bounced
-            - cancelled
-        callbackUrl:
-          type: string
-          maxLength: 255
-          description: 'URL to call upon contract creation'
-          format: uri
-          example: https://server.name/path
-        partnerId:
-          type: string
-          maxLength: 25
-          description: predefined partner ID (maps to EPP ID)
-          example: 'xxx-3432-dasdf'
-        customId:
-          type: string
-          description: Customer defined ID number for end to end tracking
-          maxLength: 255
-          example: 'DJF-KDF-KDL-KER'
-        lessee:
-          type: array
-          maxItems: 2
-          description: Information about the person (or persons) renting the apartment
-          items:
-            type: object
-            required:
-              - firstName
-              - lastName
-              - email
-              - address
-            properties:
-              gender:
-                type: string
-                enum:
-                  - m
-                  - f
-                maxLength: 1
-              firstName:
-                type: string
-                example: Max
-                maxLength: 255
-              lastName:
-                type: string
-                example: Mustermann
-                maxLength: 255
-              birthdate:
-                type: string
-                format: date
-                example: '1984-05-01'
-                maxLength: 10
-              email:
-                type: string
-                format: email
-                example: 'max.mustermann@example.com'
-                maxLength: 255
-              phone:
-                type: string
-                format: phonenumber
-                description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
-                example: "030 1234567"
-                maxLength: 255
-              address:
-                type: object
                 required:
-                  - street
-                  - houseNum
-                  - zip
-                  - city
-                properties:
-                  street:
-                    type: string
-                    example: Gaudystraße
-                    maxLength: 255
-                  houseNum:
-                    type: string
-                    example: 26A
-                    maxLength: 255
-                  zip:
-                    type: string
-                    example: 10439
-                    maxLength: 16
-                  city:
-                    type: string
-                    example: Berlin
-                    maxLength: 255
-              nationality:
-                type: string
-                example: DE
-                maxLength: 2
-                format: 2 Digit ISO Country Code
-        lessor:
-          description: |
-            Landlord information
-          type: object
-          properties:
-            person:
-              description: Landlord
-              type: object
-              properties:
-                gender:
-                  type: string
-                  enum:
-                    - m
-                    - f
-                  maxLength: 1
-                firstName:
-                  type: string
-                  example: Max
-                  maxLength: 255
-                lastName:
-                  type: string
-                  example: Mustermann
-                  maxLength: 255
-            company:
-              description: Landlord company name (if this object is present, lessor.person is ignored)
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  example: Scrooge McDuck Rental
-                  maxLength: 255
-                name2:
-                  type: string
-                  example: Berlin Office
-                  maxLength: 255
-            address:
-              type: object
-              required:
-                - street
-                - houseNum
-                - zip
-                - city
-              properties:
-                street:
-                  type: string
-                  example: Gaudystraße
-                  maxLength: 255
-                houseNum:
-                  type: string
-                  example: 26A
-                  maxLength: 255
-                zip:
-                  type: string
-                  example: 10439
-                  maxLength: 16
-                city:
-                  type: string
-                  example: Berlin
-                  maxLength: 255
-        apartment:
-          type: object
-          required:
-            - deposit
-            - address
-            - contractDates
-          properties:
-            depositPaid:
-              description: Set to true if Deposit has already been paid, assumed to be false if not present
-              type: boolean
-            monthlyRent:
-              description: 'Monthly cold rent'
-              type: number
-              format: float
-              example: 500.00
-            deposit:
-              description: 'Deposit Amount'
-              type: number
-              format: float
-              example: 1500.00
-            contractDates:
-              type: object
-              required:
-                - start
-              properties:
-                start:
-                  description: 'Start of the rental contract in the format: YYYY-MM-DD'
-                  example: '2019-02-01'
-                  format: date
-                  type: string
-                end:
-                  description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
-                  example: '2020-02-01'
-                  format: date
-                  type: string
-                signed:
-                  description: 'Date contract was signed in the format: YYYY-MM-DD'
-                  example: '2019-01-15'
-                  format: date
-                  type: string
-            address:
-              type: object
-              required:
-                - street
-                - houseNum
-                - zip
-                - city
-              description: Address of the rental properity
-              properties:
-                street:
-                  type: string
-                  example: Gaudystraße
-                  maxLength: 255
-                houseNum:
-                  type: string
-                  example: 26A
-                  maxLength: 255
-                zip:
-                  type: string
-                  example: 10439
-                  maxLength: 16
-                city:
-                  type: string
-                  example: Berlin
-                  maxLength: 255
-        bankAccount:
-          type: object
-          required:
-            - owner
-            - iban
-          properties:
-            owner:
-              type: string
-              description: Account owner
-              example: 'Max Mustermann'
-            bankName:
-              description: Name of the bank if available
-              type: string
-              example: DKB
-            iban:
-              type: string
-              format: iban
-              example: DE12500105170648489890
-            paymentFrequency:
-              type: string
-              enum:
-                - 'monthly'
-                - 'yearly'
-    ApplicationUpdate:
-      allOf:
-        - type: object
-          required:
-            - orderId
-          properties:
-            orderId:
-              type: number
-              description: 'Previously assigned plusforta ID'
-              example: 1043324
-        - $ref: '#/components/schemas/Application'
-    ApplicationResponse:
-      properties:
-        customId:
-          type: string
-          description: Customer defined ID number for end to end tracking
-          maxLength: 255
-          example: 'DJF-KDF-KDL-KER'
-        orderId:
-          type: number
-          description: plusForta generated ID for this application
-          example: 1043324
-        contractNumber:
-          type: string
-          description: Insurer generated contract ID number
-          example: 'VS3432345-00001'
-    Cancel:
-      description: Requires one of customId, contractNumber, or orderId
-      properties:
-        customId:
-          type: string
-          description: Customer defined ID number for end to end tracking
-          maxLength: 255
-          example: 'DJF-KDF-KDL-KER'
-        orderId:
-          type: number
-          description: plusForta generated ID for this application
-          example: 1043324
-        contractNumber:
-          type: string
-          description: Insurer generated contract ID number
-          example: 'VS3432345-00001'
-        effectiveDate:
-          type: string
-          format: date
-          example: '1984-05-01'
-          maxLength: 10
-          description: The future date the coverage should be ended.  If blank, effective immediately.
-    CancelResponse:
-      required:
-        - orderId
-      properties:
-        customId:
-          type: string
-          description: Customer defined ID number for end to end tracking
-          maxLength: 255
-          example: 'DJF-KDF-KDL-KER'
-        orderId:
-          type: number
-          description: plusForta generated ID for this application
-          example: 1043324
-        contractNumber:
-          type: string
-          description: Insurer generated contract ID number
-          example: 'VS3432345-00001'
-    ApplicationErrorResponse:
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              errorType:
-                type: string
-                example: 'Validation'
-              errorList:
-                description: |
-                  a list of fields with an array of errors.
+                  - code
+                  - message
                 type: object
                 properties:
-                  apartment.address.street:
-                    type: array
-                    items:
+                  code:
+                    type: string
+                    example: UNKNOWN
+                  message:
+                    type: string
+                    example: 'Unknown error'
+      security:
+        -
+          ApiKeyAuth: {  }
+components:
+  schemas:
+    Application:
+      title: Application
+      allOf:
+        -
+          required:
+            - partnerId
+            - lessee
+            - lessor
+            - apartment
+            - bankAccount
+          properties:
+            callbackUrl:
+              maxLength: 255
+              type: string
+              description: 'URL to call upon contract creation'
+              format: uri
+              example: 'https://server.name/path'
+            partnerId:
+              maxLength: 25
+              type: string
+              description: 'predefined partner ID (maps to EPP ID)'
+              example: xxx-3432-dasdf
+            customId:
+              maxLength: 255
+              type: string
+              description: 'Customer defined ID number for end to end tracking'
+              nullable: true
+              example: DJF-KDF-KDL-KER
+            lessee:
+              maxItems: 2
+              type: array
+              items:
+                required:
+                  - firstName
+                  - lastName
+                  - email
+                type: object
+                properties:
+                  gender:
+                    maxLength: 1
+                    enum:
+                      - m
+                      - f
+                    type: string
+                  firstName:
+                    maxLength: 255
+                    type: string
+                    example: Max
+                  lastName:
+                    maxLength: 255
+                    type: string
+                    example: Mustermann
+                  birthdate:
+                    maxLength: 10
+                    type: string
+                    format: date
+                    example: '1984-05-01'
+                  email:
+                    maxLength: 255
+                    type: string
+                    format: email
+                    example: max.mustermann@example.com
+                  phone:
+                    maxLength: 255
+                    type: string
+                    description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
+                    format: phonenumber
+                    example: '030 1234567'
+                  nationality:
+                    maxLength: 2
+                    type: string
+                    format: '2 Digit ISO Country Code'
+                    example: DE
+                  address:
+                    title: 'Postal Address'
+                    required:
+                      - street
+                      - houseNum
+                      - zip
+                      - city
+                    type: object
+                    properties:
+                      street:
+                        maxLength: 255
+                        type: string
+                        example: Gaudystraße
+                      houseNum:
+                        maxLength: 255
+                        type: string
+                        example: 26A
+                      zip:
+                        maxLength: 16
+                        type: string
+                        example: 10439
+                      city:
+                        maxLength: 255
+                        type: string
+                        example: Berlin
+              description: 'Information about the person (or persons) renting the apartment'
+            lessor:
+              type: object
+              oneOf:
+                -
+                  title: 'Company with address (postal or P.O. Box)'
+                  required:
+                    - company
+                  type: object
+                  properties:
+                    company:
+                      required:
+                        - name
                       type: object
                       properties:
-                        code:
+                        name:
+                          allOf:
+                            -
+                              nullable: true
+                            -
+                              maxLength: 255
+                              type: string
+                              example: 'Scrooge McDuck Rental'
+                        name2:
+                          allOf:
+                            -
+                              nullable: true
+                            -
+                              maxLength: 255
+                              type: string
+                              example: 'Berlin Office'
+                      description: 'Landlord company name (if this object is present, lessor.person is ignored)'
+                      nullable: true
+                    address:
+                      type: object
+                      oneOf:
+                        -
+                          title: 'Postal Address'
+                          required:
+                            - street
+                            - houseNum
+                            - zip
+                            - city
+                          type: object
+                          properties:
+                            street:
+                              maxLength: 255
+                              type: string
+                              example: Gaudystraße
+                            houseNum:
+                              maxLength: 255
+                              type: string
+                              example: 26A
+                            zip:
+                              maxLength: 16
+                              type: string
+                              example: 10439
+                            city:
+                              maxLength: 255
+                              type: string
+                              example: Berlin
+                        -
+                          title: 'P.O. Box'
+                          required:
+                            - pobox
+                            - zip
+                            - city
+                          type: object
+                          properties:
+                            pobox:
+                              maxLength: 8
+                              type: string
+                              example: '12345678'
+                            zip:
+                              maxLength: 16
+                              type: string
+                              example: 10439
+                            city:
+                              maxLength: 255
+                              type: string
+                              example: Berlin
+                          example:
+                            pobox: 12345678
+                            zip: 10439
+                            city: Berlin
+                      description: 'Either P.O. Box or postal address has to be given'
+                -
+                  title: 'Person with postal address'
+                  required:
+                    - person
+                  type: object
+                  properties:
+                    person:
+                      required:
+                        - firstName
+                        - lastName
+                        - gender
+                      type: object
+                      properties:
+                        gender:
+                          maxLength: 1
+                          enum:
+                            - m
+                            - f
                           type: string
-                          example: 'REQFLD'
-                        message:
+                        firstName:
+                          allOf:
+                            -
+                              nullable: true
+                            -
+                              maxLength: 255
+                              type: string
+                              example: Max
+                        lastName:
+                          allOf:
+                            -
+                              nullable: true
+                            -
+                              maxLength: 255
+                              type: string
+                              example: Mustermann
+                      description: Landlord
+                      nullable: true
+                    address:
+                      title: 'Postal Address'
+                      required:
+                        - street
+                        - houseNum
+                        - zip
+                        - city
+                      type: object
+                      properties:
+                        street:
+                          maxLength: 255
                           type: string
-                          example: 'Required Field lessee.address.street missing'
+                          example: Gaudystraße
+                        houseNum:
+                          maxLength: 255
+                          type: string
+                          example: 26A
+                        zip:
+                          maxLength: 16
+                          type: string
+                          example: 10439
+                        city:
+                          maxLength: 255
+                          type: string
+                          example: Berlin
+              description: "Landlord information\n"
+              example:
+                company:
+                  name: 'plusForta GmbH'
+                address:
+                  pobox: 12345678
+                  zip: 10439
+                  city: Berlin
+            apartment:
+              required:
+                - deposit
+                - address
+                - contractDates
+              type: object
+              properties:
+                depositPaid:
+                  type: boolean
+                  description: 'Set to true if Deposit has already been paid, assumed to be false if not present'
+                monthlyRent:
+                  type: number
+                  description: 'Monthly cold rent'
+                  format: float
+                  example: !!float 500
+                deposit:
+                  type: number
+                  description: 'Deposit Amount'
+                  format: float
+                  example: !!float 1500
+                contractDates:
+                  required:
+                    - start
+                  type: object
+                  properties:
+                    start:
+                      allOf:
+                        -
+                          maxLength: 10
+                          type: string
+                          format: date
+                          example: '1984-05-01'
+                      description: 'Start of the rental contract in the format: YYYY-MM-DD'
+                      example: '2019-02-01'
+                    end:
+                      allOf:
+                        -
+                          nullable: true
+                        -
+                          maxLength: 10
+                          type: string
+                          format: date
+                          example: '1984-05-01'
+                      description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
+                      example: '2020-02-01'
+                    signed:
+                      allOf:
+                        -
+                          nullable: true
+                        -
+                          maxLength: 10
+                          type: string
+                          format: date
+                          example: '1984-05-01'
+                      description: 'Date contract was signed in the format: YYYY-MM-DD'
+                      example: '2019-01-15'
+                address:
+                  allOf:
+                    -
+                      title: 'Postal Address'
+                      required:
+                        - street
+                        - houseNum
+                        - zip
+                        - city
+                      type: object
+                      properties:
+                        street:
+                          maxLength: 255
+                          type: string
+                          example: Gaudystraße
+                        houseNum:
+                          maxLength: 255
+                          type: string
+                          example: 26A
+                        zip:
+                          maxLength: 16
+                          type: string
+                          example: 10439
+                        city:
+                          maxLength: 255
+                          type: string
+                          example: Berlin
+                  description: 'Address of the rental properity'
+            bankAccount:
+              required:
+                - owner
+                - iban
+              type: object
+              properties:
+                owner:
+                  type: string
+                  description: 'Account owner'
+                  example: 'Max Mustermann'
+                bankName:
+                  type: string
+                  description: 'Name of the bank if available'
+                  example: DKB
+                iban:
+                  type: string
+                  format: iban
+                  example: DE12500105170648489890
+                paymentFrequency:
+                  enum:
+                    - monthly
+                    - semi-annually
+                    - quarterly
+                    - yearly
+                  type: string
+    Cancellation:
+      title: Cancellation
+      allOf:
+        -
+          properties:
+            customId:
+              maxLength: 255
+              type: string
+              description: 'Customer defined ID number for end to end tracking'
+              nullable: true
+              example: DJF-KDF-KDL-KER
+            orderId:
+              type: number
+              description: 'plusForta order ID'
+              example: '102343'
+            contractNumber:
+              type: string
+              description: 'R+V supplied BürgschaftsNr'
+              nullable: true
+            effectiveDate:
+              allOf:
+                -
+                  maxLength: 10
+                  type: string
+                  format: date
+                  example: '1984-05-01'
+              description: 'The future date the coverage should be ended.  If blank, effective immediately.'
+          description: 'Requires one of customId, contractNumber, or orderId'
+    CallbackProcessed:
+      allOf:
+        -
+          required:
+            - type
+            - orderId
+          type: object
+          properties:
+            type:
+              type: string
+            customId:
+              maxLength: 255
+              type: string
+              description: 'Customer defined ID number for end to end tracking'
+              nullable: true
+              example: DJF-KDF-KDL-KER
+            orderId:
+              type: number
+              description: 'plusForta order ID'
+              example: '102343'
+            contractNumber:
+              type: string
+              description: 'R+V supplied BürgschaftsNr'
+              nullable: true
+            securityNonce:
+              maxLength: 255
+              type: string
+              description: 'Optionally returned nonce (if provided in initial POST/PATCH)'
+        -
+          required:
+            - contractNumber
+            - contractStatus
+          type: object
+          properties:
+            type:
+              enum:
+                - processed
+              example: processed
+            contractNumber:
+              allOf:
+                -
+                  nullable: false
+                -
+                  type: string
+                  description: 'R+V supplied BürgschaftsNr'
+                  nullable: true
+            contractStatus:
+              enum:
+                - accepted
+                - declined
+              type: string
+              description: 'Insurance provider response to application'
+      description: 'Generated when an application has a decision from the insurance provider'
+    CallbackSubmit:
+      allOf:
+        -
+          required:
+            - type
+            - orderId
+          type: object
+          properties:
+            type:
+              type: string
+            customId:
+              maxLength: 255
+              type: string
+              description: 'Customer defined ID number for end to end tracking'
+              nullable: true
+              example: DJF-KDF-KDL-KER
+            orderId:
+              type: number
+              description: 'plusForta order ID'
+              example: '102343'
+            contractNumber:
+              type: string
+              description: 'R+V supplied BürgschaftsNr'
+              nullable: true
+            securityNonce:
+              maxLength: 255
+              type: string
+              description: 'Optionally returned nonce (if provided in initial POST/PATCH)'
+        -
+          required:
+            - type
+          type: object
+          properties:
+            type:
+              enum:
+                - submitted
+              example: submitted
+    CallbackBounce:
+      allOf:
+        -
+          required:
+            - type
+            - orderId
+          type: object
+          properties:
+            type:
+              type: string
+            customId:
+              maxLength: 255
+              type: string
+              description: 'Customer defined ID number for end to end tracking'
+              nullable: true
+              example: DJF-KDF-KDL-KER
+            orderId:
+              type: number
+              description: 'plusForta order ID'
+              example: '102343'
+            contractNumber:
+              type: string
+              description: 'R+V supplied BürgschaftsNr'
+              nullable: true
+            securityNonce:
+              maxLength: 255
+              type: string
+              description: 'Optionally returned nonce (if provided in initial POST/PATCH)'
+        -
+          type: object
+          properties:
+            type:
+              enum:
+                - bounced
+              example: bounced
     Error:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
       required:
+        - code
         - message
-    NotFound:
       type: object
       properties:
         code:
           type: string
-          example: 'NOTFOUND'
         message:
           type: string
-          example: 'Object not found'
-      required:
-        - message
-    Unauthorized:
-      type: object
-      properties:
-        code:
-          type: string
-          example: 'NOAUTH'
-        message:
-          type: string
-          example: 'Credentials for auth missing'
-    Denied:
-      type: object
-      properties:
-        code:
-          type: string
-          example: 'BLOCKED'
-        message:
-          type: string
-          example: 'Requested action is not possible'
-  responses:
-    NotFound:
-      description: The specified resource was not found
+  requestBodies:
+    ApplicationPost:
+      description: 'data for creating an Application'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            title: Application
+            allOf:
+              -
+                required:
+                  - partnerId
+                  - lessee
+                  - lessor
+                  - apartment
+                  - bankAccount
+                properties:
+                  callbackUrl:
+                    maxLength: 255
+                    type: string
+                    description: 'URL to call upon contract creation'
+                    format: uri
+                    example: 'https://server.name/path'
+                  partnerId:
+                    maxLength: 25
+                    type: string
+                    description: 'predefined partner ID (maps to EPP ID)'
+                    example: xxx-3432-dasdf
+                  customId:
+                    maxLength: 255
+                    type: string
+                    description: 'Customer defined ID number for end to end tracking'
+                    nullable: true
+                    example: DJF-KDF-KDL-KER
+                  lessee:
+                    maxItems: 2
+                    type: array
+                    items:
+                      required:
+                        - firstName
+                        - lastName
+                        - email
+                      type: object
+                      properties:
+                        gender:
+                          maxLength: 1
+                          enum:
+                            - m
+                            - f
+                          type: string
+                        firstName:
+                          maxLength: 255
+                          type: string
+                          example: Max
+                        lastName:
+                          maxLength: 255
+                          type: string
+                          example: Mustermann
+                        birthdate:
+                          maxLength: 10
+                          type: string
+                          format: date
+                          example: '1984-05-01'
+                        email:
+                          maxLength: 255
+                          type: string
+                          format: email
+                          example: max.mustermann@example.com
+                        phone:
+                          maxLength: 255
+                          type: string
+                          description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
+                          format: phonenumber
+                          example: '030 1234567'
+                        nationality:
+                          maxLength: 2
+                          type: string
+                          format: '2 Digit ISO Country Code'
+                          example: DE
+                        address:
+                          title: 'Postal Address'
+                          required:
+                            - street
+                            - houseNum
+                            - zip
+                            - city
+                          type: object
+                          properties:
+                            street:
+                              maxLength: 255
+                              type: string
+                              example: Gaudystraße
+                            houseNum:
+                              maxLength: 255
+                              type: string
+                              example: 26A
+                            zip:
+                              maxLength: 16
+                              type: string
+                              example: 10439
+                            city:
+                              maxLength: 255
+                              type: string
+                              example: Berlin
+                    description: 'Information about the person (or persons) renting the apartment'
+                  lessor:
+                    type: object
+                    oneOf:
+                      -
+                        title: 'Company with address (postal or P.O. Box)'
+                        required:
+                          - company
+                        type: object
+                        properties:
+                          company:
+                            required:
+                              - name
+                            type: object
+                            properties:
+                              name:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: 'Scrooge McDuck Rental'
+                              name2:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: 'Berlin Office'
+                            description: 'Landlord company name (if this object is present, lessor.person is ignored)'
+                            nullable: true
+                          address:
+                            type: object
+                            oneOf:
+                              -
+                                title: 'Postal Address'
+                                required:
+                                  - street
+                                  - houseNum
+                                  - zip
+                                  - city
+                                type: object
+                                properties:
+                                  street:
+                                    maxLength: 255
+                                    type: string
+                                    example: Gaudystraße
+                                  houseNum:
+                                    maxLength: 255
+                                    type: string
+                                    example: 26A
+                                  zip:
+                                    maxLength: 16
+                                    type: string
+                                    example: 10439
+                                  city:
+                                    maxLength: 255
+                                    type: string
+                                    example: Berlin
+                              -
+                                title: 'P.O. Box'
+                                required:
+                                  - pobox
+                                  - zip
+                                  - city
+                                type: object
+                                properties:
+                                  pobox:
+                                    maxLength: 8
+                                    type: string
+                                    example: '12345678'
+                                  zip:
+                                    maxLength: 16
+                                    type: string
+                                    example: 10439
+                                  city:
+                                    maxLength: 255
+                                    type: string
+                                    example: Berlin
+                                example:
+                                  pobox: 12345678
+                                  zip: 10439
+                                  city: Berlin
+                            description: 'Either P.O. Box or postal address has to be given'
+                      -
+                        title: 'Person with postal address'
+                        required:
+                          - person
+                        type: object
+                        properties:
+                          person:
+                            required:
+                              - firstName
+                              - lastName
+                              - gender
+                            type: object
+                            properties:
+                              gender:
+                                maxLength: 1
+                                enum:
+                                  - m
+                                  - f
+                                type: string
+                              firstName:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: Max
+                              lastName:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: Mustermann
+                            description: Landlord
+                            nullable: true
+                          address:
+                            title: 'Postal Address'
+                            required:
+                              - street
+                              - houseNum
+                              - zip
+                              - city
+                            type: object
+                            properties:
+                              street:
+                                maxLength: 255
+                                type: string
+                                example: Gaudystraße
+                              houseNum:
+                                maxLength: 255
+                                type: string
+                                example: 26A
+                              zip:
+                                maxLength: 16
+                                type: string
+                                example: 10439
+                              city:
+                                maxLength: 255
+                                type: string
+                                example: Berlin
+                    description: "Landlord information\n"
+                    example:
+                      company:
+                        name: 'plusForta GmbH'
+                      address:
+                        pobox: 12345678
+                        zip: 10439
+                        city: Berlin
+                  apartment:
+                    required:
+                      - deposit
+                      - address
+                      - contractDates
+                    type: object
+                    properties:
+                      depositPaid:
+                        type: boolean
+                        description: 'Set to true if Deposit has already been paid, assumed to be false if not present'
+                      monthlyRent:
+                        type: number
+                        description: 'Monthly cold rent'
+                        format: float
+                        example: !!float 500
+                      deposit:
+                        type: number
+                        description: 'Deposit Amount'
+                        format: float
+                        example: !!float 1500
+                      contractDates:
+                        required:
+                          - start
+                        type: object
+                        properties:
+                          start:
+                            allOf:
+                              -
+                                maxLength: 10
+                                type: string
+                                format: date
+                                example: '1984-05-01'
+                            description: 'Start of the rental contract in the format: YYYY-MM-DD'
+                            example: '2019-02-01'
+                          end:
+                            allOf:
+                              -
+                                nullable: true
+                              -
+                                maxLength: 10
+                                type: string
+                                format: date
+                                example: '1984-05-01'
+                            description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
+                            example: '2020-02-01'
+                          signed:
+                            allOf:
+                              -
+                                nullable: true
+                              -
+                                maxLength: 10
+                                type: string
+                                format: date
+                                example: '1984-05-01'
+                            description: 'Date contract was signed in the format: YYYY-MM-DD'
+                            example: '2019-01-15'
+                      address:
+                        allOf:
+                          -
+                            title: 'Postal Address'
+                            required:
+                              - street
+                              - houseNum
+                              - zip
+                              - city
+                            type: object
+                            properties:
+                              street:
+                                maxLength: 255
+                                type: string
+                                example: Gaudystraße
+                              houseNum:
+                                maxLength: 255
+                                type: string
+                                example: 26A
+                              zip:
+                                maxLength: 16
+                                type: string
+                                example: 10439
+                              city:
+                                maxLength: 255
+                                type: string
+                                example: Berlin
+                        description: 'Address of the rental properity'
+                  bankAccount:
+                    required:
+                      - owner
+                      - iban
+                    type: object
+                    properties:
+                      owner:
+                        type: string
+                        description: 'Account owner'
+                        example: 'Max Mustermann'
+                      bankName:
+                        type: string
+                        description: 'Name of the bank if available'
+                        example: DKB
+                      iban:
+                        type: string
+                        format: iban
+                        example: DE12500105170648489890
+                      paymentFrequency:
+                        enum:
+                          - monthly
+                          - semi-annually
+                          - quarterly
+                          - yearly
+                        type: string
+      required: true
+    Cancel:
+      description: 'data for cancelling an existing contract, must pass one of the following IDs: customId, contractNumber, or orderId'
+      content:
+        application/json:
+          schema:
+            title: Cancellation
+            allOf:
+              -
+                properties:
+                  customId:
+                    maxLength: 255
+                    type: string
+                    description: 'Customer defined ID number for end to end tracking'
+                    nullable: true
+                    example: DJF-KDF-KDL-KER
+                  orderId:
+                    type: number
+                    description: 'plusForta order ID'
+                    example: '102343'
+                  contractNumber:
+                    type: string
+                    description: 'R+V supplied BürgschaftsNr'
+                    nullable: true
+                  effectiveDate:
+                    allOf:
+                      -
+                        maxLength: 10
+                        type: string
+                        format: date
+                        example: '1984-05-01'
+                    description: 'The future date the coverage should be ended.  If blank, effective immediately.'
+                description: 'Requires one of customId, contractNumber, or orderId'
+      required: true
+    ApplicationPatch:
+      description: 'Application Data'
+      content:
+        application/json:
+          schema:
+            allOf:
+              -
+                required:
+                  - orderId
+                type: object
+                properties:
+                  orderId:
+                    type: number
+                    description: 'plusForta order ID'
+                    example: '102343'
+              -
+                required:
+                  - partnerId
+                  - lessee
+                  - lessor
+                  - apartment
+                  - bankAccount
+                properties:
+                  callbackUrl:
+                    maxLength: 255
+                    type: string
+                    description: 'URL to call upon contract creation'
+                    format: uri
+                    example: 'https://server.name/path'
+                  partnerId:
+                    maxLength: 25
+                    type: string
+                    description: 'predefined partner ID (maps to EPP ID)'
+                    example: xxx-3432-dasdf
+                  customId:
+                    maxLength: 255
+                    type: string
+                    description: 'Customer defined ID number for end to end tracking'
+                    nullable: true
+                    example: DJF-KDF-KDL-KER
+                  lessee:
+                    maxItems: 2
+                    type: array
+                    items:
+                      required:
+                        - firstName
+                        - lastName
+                        - email
+                      type: object
+                      properties:
+                        gender:
+                          maxLength: 1
+                          enum:
+                            - m
+                            - f
+                          type: string
+                        firstName:
+                          maxLength: 255
+                          type: string
+                          example: Max
+                        lastName:
+                          maxLength: 255
+                          type: string
+                          example: Mustermann
+                        birthdate:
+                          maxLength: 10
+                          type: string
+                          format: date
+                          example: '1984-05-01'
+                        email:
+                          maxLength: 255
+                          type: string
+                          format: email
+                          example: max.mustermann@example.com
+                        phone:
+                          maxLength: 255
+                          type: string
+                          description: 'phone number of lessee (only German numbers, starting with 0, include area code)'
+                          format: phonenumber
+                          example: '030 1234567'
+                        nationality:
+                          maxLength: 2
+                          type: string
+                          format: '2 Digit ISO Country Code'
+                          example: DE
+                        address:
+                          title: 'Postal Address'
+                          required:
+                            - street
+                            - houseNum
+                            - zip
+                            - city
+                          type: object
+                          properties:
+                            street:
+                              maxLength: 255
+                              type: string
+                              example: Gaudystraße
+                            houseNum:
+                              maxLength: 255
+                              type: string
+                              example: 26A
+                            zip:
+                              maxLength: 16
+                              type: string
+                              example: 10439
+                            city:
+                              maxLength: 255
+                              type: string
+                              example: Berlin
+                    description: 'Information about the person (or persons) renting the apartment'
+                  lessor:
+                    type: object
+                    oneOf:
+                      -
+                        title: 'Company with address (postal or P.O. Box)'
+                        required:
+                          - company
+                        type: object
+                        properties:
+                          company:
+                            required:
+                              - name
+                            type: object
+                            properties:
+                              name:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: 'Scrooge McDuck Rental'
+                              name2:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: 'Berlin Office'
+                            description: 'Landlord company name (if this object is present, lessor.person is ignored)'
+                            nullable: true
+                          address:
+                            type: object
+                            oneOf:
+                              -
+                                title: 'Postal Address'
+                                required:
+                                  - street
+                                  - houseNum
+                                  - zip
+                                  - city
+                                type: object
+                                properties:
+                                  street:
+                                    maxLength: 255
+                                    type: string
+                                    example: Gaudystraße
+                                  houseNum:
+                                    maxLength: 255
+                                    type: string
+                                    example: 26A
+                                  zip:
+                                    maxLength: 16
+                                    type: string
+                                    example: 10439
+                                  city:
+                                    maxLength: 255
+                                    type: string
+                                    example: Berlin
+                              -
+                                title: 'P.O. Box'
+                                required:
+                                  - pobox
+                                  - zip
+                                  - city
+                                type: object
+                                properties:
+                                  pobox:
+                                    maxLength: 8
+                                    type: string
+                                    example: '12345678'
+                                  zip:
+                                    maxLength: 16
+                                    type: string
+                                    example: 10439
+                                  city:
+                                    maxLength: 255
+                                    type: string
+                                    example: Berlin
+                                example:
+                                  pobox: 12345678
+                                  zip: 10439
+                                  city: Berlin
+                            description: 'Either P.O. Box or postal address has to be given'
+                      -
+                        title: 'Person with postal address'
+                        required:
+                          - person
+                        type: object
+                        properties:
+                          person:
+                            required:
+                              - firstName
+                              - lastName
+                              - gender
+                            type: object
+                            properties:
+                              gender:
+                                maxLength: 1
+                                enum:
+                                  - m
+                                  - f
+                                type: string
+                              firstName:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: Max
+                              lastName:
+                                allOf:
+                                  -
+                                    nullable: true
+                                  -
+                                    maxLength: 255
+                                    type: string
+                                    example: Mustermann
+                            description: Landlord
+                            nullable: true
+                          address:
+                            title: 'Postal Address'
+                            required:
+                              - street
+                              - houseNum
+                              - zip
+                              - city
+                            type: object
+                            properties:
+                              street:
+                                maxLength: 255
+                                type: string
+                                example: Gaudystraße
+                              houseNum:
+                                maxLength: 255
+                                type: string
+                                example: 26A
+                              zip:
+                                maxLength: 16
+                                type: string
+                                example: 10439
+                              city:
+                                maxLength: 255
+                                type: string
+                                example: Berlin
+                    description: "Landlord information\n"
+                    example:
+                      company:
+                        name: 'plusForta GmbH'
+                      address:
+                        pobox: 12345678
+                        zip: 10439
+                        city: Berlin
+                  apartment:
+                    required:
+                      - deposit
+                      - address
+                      - contractDates
+                    type: object
+                    properties:
+                      depositPaid:
+                        type: boolean
+                        description: 'Set to true if Deposit has already been paid, assumed to be false if not present'
+                      monthlyRent:
+                        type: number
+                        description: 'Monthly cold rent'
+                        format: float
+                        example: !!float 500
+                      deposit:
+                        type: number
+                        description: 'Deposit Amount'
+                        format: float
+                        example: !!float 1500
+                      contractDates:
+                        required:
+                          - start
+                        type: object
+                        properties:
+                          start:
+                            allOf:
+                              -
+                                maxLength: 10
+                                type: string
+                                format: date
+                                example: '1984-05-01'
+                            description: 'Start of the rental contract in the format: YYYY-MM-DD'
+                            example: '2019-02-01'
+                          end:
+                            allOf:
+                              -
+                                nullable: true
+                              -
+                                maxLength: 10
+                                type: string
+                                format: date
+                                example: '1984-05-01'
+                            description: 'if the rental contract has an end date, include it here.  Format: YYYY-MM-DD'
+                            example: '2020-02-01'
+                          signed:
+                            allOf:
+                              -
+                                nullable: true
+                              -
+                                maxLength: 10
+                                type: string
+                                format: date
+                                example: '1984-05-01'
+                            description: 'Date contract was signed in the format: YYYY-MM-DD'
+                            example: '2019-01-15'
+                      address:
+                        allOf:
+                          -
+                            title: 'Postal Address'
+                            required:
+                              - street
+                              - houseNum
+                              - zip
+                              - city
+                            type: object
+                            properties:
+                              street:
+                                maxLength: 255
+                                type: string
+                                example: Gaudystraße
+                              houseNum:
+                                maxLength: 255
+                                type: string
+                                example: 26A
+                              zip:
+                                maxLength: 16
+                                type: string
+                                example: 10439
+                              city:
+                                maxLength: 255
+                                type: string
+                                example: Berlin
+                        description: 'Address of the rental properity'
+                  bankAccount:
+                    required:
+                      - owner
+                      - iban
+                    type: object
+                    properties:
+                      owner:
+                        type: string
+                        description: 'Account owner'
+                        example: 'Max Mustermann'
+                      bankName:
+                        type: string
+                        description: 'Name of the bank if available'
+                        example: DKB
+                      iban:
+                        type: string
+                        format: iban
+                        example: DE12500105170648489890
+                      paymentFrequency:
+                        enum:
+                          - monthly
+                          - semi-annually
+                          - quarterly
+                          - yearly
+                        type: string
+      required: true
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: X-Apikey
+      in: header
+tags:
+  -
+    name: application
+    description: 'Submit or update an application'
+  -
+    name: cancel
+    description: 'Submit the cancellation of an existing rental deposit guarantee'
