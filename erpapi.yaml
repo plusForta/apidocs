@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: 'ERP API'
-  description: "## Overview\nThe PlusForta ERP API is for the use of our ERP customers.\n\n## How to sign up\nFor more information, please contact us at info@plusforta.de.\n\n## How to use\n\n### Normal Process\nThe process is quite simple.\n1. You submit application data under the ```/application``` endpoint with a POST.\n1. The system returns an ```OrderID``` for this application.\n1. Will now send an email to the end user prompting them to complete the application online and agree to the terms and conditions.\n    1. Note: until the end user starts this process, the application may be updated by resubmitting the data with the ```orderId``` generated upon initial submission.\n1. After the insurance company processes the application, we will update the application with the new status\n\n### Callbacks\n\nYou can pass us a callback URL when creating the application. If you do so you will receive callbacks at certain points in the lifecycle of the application.\n1. When the customer submits the application to the insurance provider we will send the ```applicationSubmited``` callback\n1. When the insurance provider gives us a final answer on the application we will send the ```applicationProcessed``` callback\n1. When the email address is invalid or otherwise undeliverable we will send the ```emailBounced``` callback\n\n### Custom ID\n\nWe provide you with the ability to define a custom ID when creating the application data.  This custom ID will then be returned with all requests and can be used\nto retrive the matching record.\n\n**It is up the enduser to ensure the uniqueness of the custom ID field.**  We perform no processing on this field whatsoever.\n\n### Security Nonce\n\nYou can provide us with a securitynonce header in your POST or PATCH call and we will return the token in all of our callbacks.\nThis token assures you that these responses match your original action.\n\n## Cancelations\n\nTo end the created Contract, simply call the ```cancel``` endpoint with any of the ```orderId```, ```customId```, or ```contractNumber``` identifiers.\n\n*Note: If you pass more than one identifier, they will be checked against each other.  If they don't match, a failure will be generated.*\n\n## Notes about testing..\n\nOnce you have the necessary credentials, you may feel free to start testing.  We recommend using the staging environment unless told otherwise.\n\n## Changelog\n* alpha - document creation\n* 0.0.1alpha - internal only\n* 0.0.2alpha - internal only\n* 0.0.3alpha\n    * improve error codes\n* 0.0.4alpha\n    * added effective date to /cancel.\n* 0.0.5alpha\n    * Correct account owner\n    * monthlyRent now optional\n    * Rental contract start is now optional\n* 0.0.6alpha\n    * callbackURL is now optional.  If none supplied, callbacks are disabled.\n    * added 403 status for PATCH after application has been submitted for processing\n    * 404 status correctly coded\n    * expanded callbacks to include a callback on submission to the insurance company and a callback on email bounces\n    * add discussion about callbacks to header documentation\n    * added GET method for application endpoint\n* 0.0.7\n    * Changed PartnerId maximum length to 25\n    * fixed contractId typo to contractNumber\n* 0.0.8\n    * Re-added documentation about Security Nonce header\n* 0.0.9\n    * Changed status codes for POST actions to 201\n* 0.1.0\n    * Address for lessor is optional\n    * Address for lessee is optional\n* 0.1.1\n    * P.O. Box can be provided for lessor's address\n"
+  description: "## Overview\nThe PlusForta ERP API is for the use of our ERP customers.\n\n## How to sign up\nFor more information, please contact us at info@plusforta.de.\n\n## How to use\n\n### Normal Process\nThe process is quite simple.\n1. You submit application data under the ```/application``` endpoint with a POST.\n1. The system returns an ```OrderID``` for this application.\n1. Will now send an email to the end user prompting them to complete the application online and agree to the terms and conditions.\n    1. Note: until the end user starts this process, the application may be updated by resubmitting the data with the ```orderId``` generated upon initial submission.\n1. After the insurance company processes the application, we will update the application with the new status\n\n### Callbacks\n\nYou can pass us a callback URL when creating the application. If you do so you will receive callbacks at certain points in the lifecycle of the application.\n1. When the customer submits the application to the insurance provider we will send the ```applicationSubmited``` callback\n1. When the insurance provider gives us a final answer on the application we will send the ```applicationProcessed``` callback\n1. When the email address is invalid or otherwise undeliverable we will send the ```emailBounced``` callback\n\n### Custom ID\n\nWe provide you with the ability to define a custom ID when creating the application data.  This custom ID will then be returned with all requests and can be used\nto retrive the matching record.\n\n**It is up the enduser to ensure the uniqueness of the custom ID field.**  We perform no processing on this field whatsoever.\n\n### Security Nonce\n\nYou can provide us with a securitynonce header in your POST or PATCH call and we will return the token in all of our callbacks.\nThis token assures you that these responses match your original action.\n\n## Cancelations\n\nTo end the created Contract, simply call the ```cancel``` endpoint with any of the ```orderId```, ```customId```, or ```contractNumber``` identifiers.\n\n*Note: If you pass more than one identifier, they will be checked against each other.  If they don't match, a failure will be generated.*\n\n## Notes about testing..\n\nOnce you have the necessary credentials, you may feel free to start testing.  We recommend using the staging environment unless told otherwise.\n\n## Changelog\n* alpha - document creation\n* 0.0.1alpha - internal only\n* 0.0.2alpha - internal only\n* 0.0.3alpha\n    * improve error codes\n* 0.0.4alpha\n    * added effective date to /cancel.\n* 0.0.5alpha\n    * Correct account owner\n    * monthlyRent now optional\n    * Rental contract start is now optional\n* 0.0.6alpha\n    * callbackURL is now optional.  If none supplied, callbacks are disabled.\n    * added 403 status for PATCH after application has been submitted for processing\n    * 404 status correctly coded\n    * expanded callbacks to include a callback on submission to the insurance company and a callback on email bounces\n    * add discussion about callbacks to header documentation\n    * added GET method for application endpoint\n* 0.0.7\n    * Changed PartnerId maximum length to 25\n    * fixed contractId typo to contractNumber\n* 0.0.8\n    * Re-added documentation about Security Nonce header\n* 0.0.9\n    * Changed status codes for POST actions to 201\n* 0.1.0\n    * Address for lessor is optional\n    * Address for lessee is optional\n* 0.1.1\n    * P.O. Box can be provided for lessor's address\n* 0.1.2\n    * Lessee's address fields are optional\n"
   contact:
     email: admin@plusforta.de
   version: 0.1.1
@@ -117,12 +117,7 @@ paths:
                               format: '2 Digit ISO Country Code'
                               example: DE
                             address:
-                              title: 'Postal Address'
-                              required:
-                                - street
-                                - houseNum
-                                - zip
-                                - city
+                              title: 'Postal Address (fields optional)'
                               type: object
                               properties:
                                 street:
@@ -146,7 +141,7 @@ paths:
                         type: object
                         oneOf:
                           -
-                            title: 'Company with address (postal or P.O. Box)'
+                            title: 'Company with postal address or P.O. Box'
                             required:
                               - company
                             type: object
@@ -595,12 +590,7 @@ paths:
                             format: '2 Digit ISO Country Code'
                             example: DE
                           address:
-                            title: 'Postal Address'
-                            required:
-                              - street
-                              - houseNum
-                              - zip
-                              - city
+                            title: 'Postal Address (fields optional)'
                             type: object
                             properties:
                               street:
@@ -624,7 +614,7 @@ paths:
                       type: object
                       oneOf:
                         -
-                          title: 'Company with address (postal or P.O. Box)'
+                          title: 'Company with postal address or P.O. Box'
                           required:
                             - company
                           type: object
@@ -1255,12 +1245,7 @@ paths:
                             format: '2 Digit ISO Country Code'
                             example: DE
                           address:
-                            title: 'Postal Address'
-                            required:
-                              - street
-                              - houseNum
-                              - zip
-                              - city
+                            title: 'Postal Address (fields optional)'
                             type: object
                             properties:
                               street:
@@ -1284,7 +1269,7 @@ paths:
                       type: object
                       oneOf:
                         -
-                          title: 'Company with address (postal or P.O. Box)'
+                          title: 'Company with postal address or P.O. Box'
                           required:
                             - company
                           type: object
@@ -1957,12 +1942,7 @@ components:
                     format: '2 Digit ISO Country Code'
                     example: DE
                   address:
-                    title: 'Postal Address'
-                    required:
-                      - street
-                      - houseNum
-                      - zip
-                      - city
+                    title: 'Postal Address (fields optional)'
                     type: object
                     properties:
                       street:
@@ -1986,7 +1966,7 @@ components:
               type: object
               oneOf:
                 -
-                  title: 'Company with address (postal or P.O. Box)'
+                  title: 'Company with postal address or P.O. Box'
                   required:
                     - company
                   type: object
@@ -2488,12 +2468,7 @@ components:
                           format: '2 Digit ISO Country Code'
                           example: DE
                         address:
-                          title: 'Postal Address'
-                          required:
-                            - street
-                            - houseNum
-                            - zip
-                            - city
+                          title: 'Postal Address (fields optional)'
                           type: object
                           properties:
                             street:
@@ -2517,7 +2492,7 @@ components:
                     type: object
                     oneOf:
                       -
-                        title: 'Company with address (postal or P.O. Box)'
+                        title: 'Company with postal address or P.O. Box'
                         required:
                           - company
                         type: object
@@ -2897,12 +2872,7 @@ components:
                           format: '2 Digit ISO Country Code'
                           example: DE
                         address:
-                          title: 'Postal Address'
-                          required:
-                            - street
-                            - houseNum
-                            - zip
-                            - city
+                          title: 'Postal Address (fields optional)'
                           type: object
                           properties:
                             street:
@@ -2926,7 +2896,7 @@ components:
                     type: object
                     oneOf:
                       -
-                        title: 'Company with address (postal or P.O. Box)'
+                        title: 'Company with postal address or P.O. Box'
                         required:
                           - company
                         type: object
