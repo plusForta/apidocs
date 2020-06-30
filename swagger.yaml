@@ -477,41 +477,41 @@ components:
                     enum:
                       - "0"
                       - "1"
-  ReservationResponse:
-    properties:
-        cid:
-          type: string
-          example: 7kH5lXW1QIid2q+c5Eq0qg==
-        state:
-          type: string
-          enum:
-            - reservation_accepted
-            - reservation_not_accepted
-            - not_completed_reservation
-            - reservation_stopped
-          description: |
-            * `reservation_accepted` - Reservation is submitted and accepted
-            * `reservation_not_accepted` - Reservation is submitted and NOT accepted
-            * `not_completed_reservation` - Reservation is incomplete
-            * `reservation_stopped` - Resvervation is currently blocked for processing (technical failure) but will be retried
-        id:
-          type: string
-          example: "10000005"
-        type:
-          type: string
-          example: TenancyRetail
-        brand:
-          type: string
-          example: kf
-          enum:
-            - kf
-        documents:
-          type: object
-          properties:
-            tenancy_reservation_complete:
-              type: string
-              example: >-
-                […]/documents/5?file_location_hash=c5ffb9896bf5df93a454acb89737c79776c13e00af595e77cbce07dc27c5f39f
+    ReservationResponse:
+      properties:
+          cid:
+            type: string
+            example: 7kH5lXW1QIid2q+c5Eq0qg==
+          state:
+            type: string
+            enum:
+              - reservation_accepted
+              - reservation_not_accepted
+              - not_completed_reservation
+              - reservation_stopped
+            description: |
+              * `reservation_accepted` - Reservation is submitted and accepted
+              * `reservation_not_accepted` - Reservation is submitted and NOT accepted
+              * `not_completed_reservation` - Reservation is incomplete
+              * `reservation_stopped` - Resvervation is currently blocked for processing (technical failure) but will be retried
+          id:
+            type: string
+            example: "10000005"
+          type:
+            type: string
+            example: TenancyRetail
+          brand:
+            type: string
+            example: kf
+            enum:
+              - kf
+          documents:
+            type: object
+            properties:
+              tenancy_reservation_complete:
+                type: string
+                example: >-
+                  […]/documents/5?file_location_hash=c5ffb9896bf5df93a454acb89737c79776c13e00af595e77cbce07dc27c5f39f
     ApplicationSubmission:
       required:
         - cid
